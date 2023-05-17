@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Client.Interface;
+using Client.IClient;
 using Client.FileHandler;
 using System.Threading.Tasks;
 using Client.DataType;
@@ -12,37 +12,39 @@ using Newtonsoft.Json;
 
 namespace Client
 {
-    class Client : IUser, IAdmin
+    class AppClient : IUser
     {
-        private readonly Dictionary<string, object> jsonData = JsonFileHandler.LoadJsonObjFromFile(@"UserData.json");
+        //private readonly Dictionary<string, object> jsonData = JsonFileHandler.LoadJsonObjFromFile(@"UserData.json");
+        private readonly Dictionary<string, object> jsonData = new Dictionary<string, object>() {};
         private string username;
         private string password;
-        private bool isLogged;
+        private bool isLogged = false;
         private Response Response { get; set; }
         private Uri ServerUri { get; set; }
         private ClientWebSocket ClientWebSocket { get; set; }
 
-        public Client(Uri serverUri)
+        public AppClient(Uri serverUri)
         {
-            username = (string)jsonData["username"];
-            password = (string)jsonData["password"];
-            isLogged = (bool)jsonData["isLogged"];
+            //username = (string)jsonData["username"];
+            //password = (string)jsonData["password"];
+            //isLogged = (bool)jsonData["isLogged"];
             ServerUri = serverUri;
         }
 
         public async Task Connect()
         {
+            ClientWebSocket = new ClientWebSocket();
             try
             {
                 await ClientWebSocket.ConnectAsync(ServerUri, CancellationToken.None);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw new Exception("Connect error");
+                Console.WriteLine(ex.Message);
             }
         }
 
-        public async Task Listener()
+        public async Task StartListening()
         {
             byte[] receiveBuffer = new byte[1024];
 
@@ -53,7 +55,8 @@ namespace Client
                 {
                     string jsonStr = Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
                     Response response = new Response(jsonStr);
-                    ResponseHandler responseHandler = new ResponseHandler(response.Get());
+                    Dictionary<string, string> responseDict = response.Get();
+                    ResponseHandler responseHandler = new ResponseHandler(responseDict);
                 }
             }
         }
@@ -62,13 +65,24 @@ namespace Client
         {
             string jsonStr = JsonConvert.SerializeObject(request.Get());
             byte[] msgBytes = Encoding.UTF8.GetBytes(jsonStr);
-            await ClientWebSocket.SendAsync(new ArraySegment<byte>(msgBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            Console.WriteLine($"msgBytes长度为{msgBytes}");
+            await ClientWebSocket.SendAsync(new ArraySegment<byte>(msgBytes), WebSocketMessageType.Binary, true, CancellationToken.None);
+
         }
 
-        public async Task Login(string username, string password)
+        /// <summary>
+        /// Perform login
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public async Task PerformLogin(string username, string password)
         {
-            // ログインチェック、trueの時ログインしない
-            if (isLogged == true) return;
+            if (isLogged == true)
+            {
+                return;
+            }
+
             password = PasswordEncryption.Encrypt(password);
             Request request = new Request("login", username, password);
             await SendJson(request);
@@ -81,39 +95,31 @@ namespace Client
             await SendJson(request);
         }
 
-        public void SendMsg(string username, string msg)
-        {
-
-        }
-
-        public void AddFriend()
-        {
-        }
-        public void GetFriendList()
-        {
-
-        }
-        public void DelFriend()
-        {
-
-        }
-
-        public void JoinGroup()
-        {
-
-        }
-
-        public void LeaveGroup()
-        {
-
-        }
+        //public Response SendMsg(string username, string msg)
+        //{
+        //}
+        //public Response AddFriend()
+        //{
+        //}
+        //public Response GetFriendList()
+        //{
+        //}
+        //public Response DelFriend()
+        //{
+        //}
+        //public Response JoinGroup()
+        //{
+        //}
+        //public Response LeaveGroup()
+        //{
+        //}
 
     }
     public class ResponseHandler : ActionHandler
     {
         public ResponseHandler(Dictionary<string, string> responseDict) : base(responseDict) 
-        { 
-
+        {
+            ActionProcessing();
         }
 
 
@@ -122,10 +128,7 @@ namespace Client
     public class ActionHandler
     {
         protected Dictionary<string, string> ResponseDict { get; set; }
-        private readonly Dictionary<string, object> ActionDict = new Dictionary<string, object>()
-        {
-            {"login",  },
-        }
+        private readonly Dictionary<string, object> ActionDict = new Dictionary<string, object>() { };
 
         public ActionHandler(Dictionary<string, string> responseDict)
         {
@@ -135,9 +138,10 @@ namespace Client
         public void ActionProcessing()
         {
             string action = ResponseDict["action"];
-            
+            if (action.Equals("login"))
+            {
+                Console.WriteLine("登录成功");
+            }
         }
-
-        public Show
     }
 }

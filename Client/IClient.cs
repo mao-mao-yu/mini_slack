@@ -3,7 +3,7 @@ using Client.DataType;
 using System.Threading.Tasks;
 
 
-namespace Client.Interface
+namespace Client.IClient
 {
     interface IUser
     {
@@ -13,7 +13,7 @@ namespace Client.Interface
         /// <param name="username">ユーザネーム</param>
         /// <param name="password">パスワード</param>
         /// <returns></returns>
-        public Task<Response> Login(string username, string password);
+        public Task PerformLogin(string username, string password);
 
         /// <summary>
         /// 登録
@@ -21,18 +21,18 @@ namespace Client.Interface
         /// <param name="username">ユーザネーム</param>
         /// <param name="password">パスワード</param>
         /// <returns></returns>
-        public Task<Response> Register(string username, string password);
+        public Task Register(string username, string password);
 
         /// <summary>
         /// メッセージを送る
         /// </summary>
-        public Response SendMsg(string username, string msg);
-        public Response AddFriend(string targetUsername);
-        public Response GetFriendList();
-        public Response DelFriend(string targetUsername);
-        public Response JoinGroup(string groupNum);
-        public Response GetGroupList();
-        public Response LeaveGroup();
+        //public Task<Response> SendMsg(string username, string msg);
+        //public Task<Response> AddFriend(string targetUsername);
+        //public Task<Response> GetFriendList();
+        //public Task<Response> DelFriend(string targetUsername);
+        //public Task<Response> JoinGroup(string groupNum);
+        //public Task<Response> GetGroupList();
+        //public Task<Response> LeaveGroup();
 
     }
 
@@ -49,5 +49,11 @@ namespace Client.Interface
         public Response AddUserToGroup(string username, string groupID);
 
         public Response DelUserFromGroup(string username, string groupID);
+    }
+
+    interface ISocket
+    {
+        public void Send();
+        public void Recv();
     }
 }

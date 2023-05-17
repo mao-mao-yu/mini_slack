@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.33529.622
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{930CCE65-8562-4B75-AED9-64051BCC6D76}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{CD7A90D7-2385-430E-AA3F-F6EC12706178}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server", "Server\Server.csproj", "{CD7A90D7-2385-430E-AA3F-F6EC12706178}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mini_slack", "mini_slack\mini_slack.csproj", "{7CFA791A-C322-4DA0-9548-45D5C0F4C34A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{CD7A90D7-2385-430E-AA3F-F6EC12706178}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD7A90D7-2385-430E-AA3F-F6EC12706178}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD7A90D7-2385-430E-AA3F-F6EC12706178}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CFA791A-C322-4DA0-9548-45D5C0F4C34A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CFA791A-C322-4DA0-9548-45D5C0F4C34A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CFA791A-C322-4DA0-9548-45D5C0F4C34A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CFA791A-C322-4DA0-9548-45D5C0F4C34A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -5,28 +5,7 @@ using Newtonsoft.Json;
 
 namespace Server.Data
 {
-    class Response
-    {
-        private Dictionary<string, string> JsonDictResponse { get; set; }
-
-        public Response(byte[] metaData)
-        {
-            string jsonStr = Encoding.UTF8.GetString(metaData);
-            JsonDictResponse = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
-        }
-
-        public Response(string jsonStr)
-        {
-            JsonDictResponse = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
-        }
-
-        public Dictionary<string, string> Get()
-        {
-            return JsonDictResponse;
-        }
-    }
-
-    class Request
+    public class Response
     {
         private readonly Dictionary<string, string> RequestBaseData = new Dictionary<string, string>();
 
@@ -34,7 +13,7 @@ namespace Server.Data
         /// request paras
         /// </summary>
         /// <param name="action">動作</param>
-        public Request(string action)
+        public Response(string action)
         {
             RequestBaseData.Add("action", action);
         }
@@ -53,5 +32,32 @@ namespace Server.Data
         {
             return RequestBaseData;
         }
+
+        public string GetJsonStr()
+        {
+            return JsonConvert.SerializeObject(RequestBaseData);
+        }
+    }
+
+    public class Request
+    {
+        private Dictionary<string, string> JsonDictResponse { get; set; }
+
+        public Request(byte[] metaData)
+        {
+            string jsonStr = Encoding.UTF8.GetString(metaData);
+            JsonDictResponse = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
+        }
+
+        public Request(string jsonStr)
+        {
+            JsonDictResponse = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
+        }
+
+        public Dictionary<string, string> Get()
+        {
+            return JsonDictResponse;
+        }
+        
     }
 }
