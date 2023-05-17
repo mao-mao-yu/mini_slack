@@ -10,7 +10,7 @@ class Start
         Uri uri = new Uri("ws://localhost:5000/");
         AppClient app = new AppClient(uri);
         await app.Connect();
-        await app.StartListening();
+        //await app.StartReceive();
         await app.PerformLogin("maomaoyu", "1234abcd");
     }
 }

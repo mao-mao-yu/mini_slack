@@ -60,15 +60,24 @@ namespace Server
                         //await webSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None);
                     }
                 }
-                while (!result.EndOfMessage);
+                while (!result.EndOfMessage && webSocket.State == WebSocketState.Open);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
-            
-
-            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+            finally
+            {
+                if (webSocket.State == WebSocketState.Open)
+                {
+                    // 等待发送队列中的所有数据发送完成
+                    while (webSocket.State == WebSocketState.Open && webSocket.CloseStatus == null)
+                    {
+                        await Task.Delay(100);
+                    }
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                }
+            }
         }
 
         public Response ActionHandler(Request request)

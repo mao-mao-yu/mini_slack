@@ -37,14 +37,16 @@ namespace Client
             try
             {
                 await ClientWebSocket.ConnectAsync(ServerUri, CancellationToken.None);
+                Task receiveTask = Task.Run(StartReceive);
             }
             catch (Exception ex)
             {
+                await ClientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
                 Console.WriteLine(ex.Message);
             }
         }
 
-        public async Task StartListening()
+        public async Task StartReceive()
         {
             byte[] receiveBuffer = new byte[1024];
 
@@ -65,7 +67,6 @@ namespace Client
         {
             string jsonStr = JsonConvert.SerializeObject(request.Get());
             byte[] msgBytes = Encoding.UTF8.GetBytes(jsonStr);
-            Console.WriteLine($"msgBytes长度为{msgBytes}");
             await ClientWebSocket.SendAsync(new ArraySegment<byte>(msgBytes), WebSocketMessageType.Binary, true, CancellationToken.None);
 
         }
@@ -78,11 +79,7 @@ namespace Client
         /// <returns></returns>
         public async Task PerformLogin(string username, string password)
         {
-            if (isLogged == true)
-            {
-                return;
-            }
-
+            if (isLogged == true) return;
             password = PasswordEncryption.Encrypt(password);
             Request request = new Request("login", username, password);
             await SendJson(request);
