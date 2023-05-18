@@ -16,7 +16,7 @@ using Client.CommunicationClient;
 
 namespace Client
 {
-    public class AppClient : MyUdpClient
+    public class AppClient : SocketClient
     {
         //private readonly Dictionary<string, object> jsonData = JsonFileHandler.LoadJsonObjFromFile(@"UserData.json");
         private const string UserFileName = @"UserData.json";
@@ -25,8 +25,7 @@ namespace Client
         public AppClient(string ip,int port) : base(ip, port) { }
         public void Start()
         {
-            StartRecv(8888);
-
+            UDPStartRecv(8888);
         }
 
         public async Task<bool> Register(string username, string password)

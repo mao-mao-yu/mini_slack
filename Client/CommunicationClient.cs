@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,8 +10,12 @@ using Newtonsoft.Json;
 
 namespace Client.CommunicationClient
 {
-    class MyTcpClient
+    public abstract class MyTcpClient
     {
+        // TCP
+
+        private IPEndPoint serverEndPoint;
+
         private async Task CloseWebSocketClient()
         {
             try
@@ -24,20 +29,7 @@ namespace Client.CommunicationClient
             }
         }
 
-        private async Task CreateWebSocketClient()
-        {
-            Uri uri = new Uri($"ws://{serverEndPoint.Address}:8080");
-            ClientWebSocket clientWebSocket = new ClientWebSocket();
-            try
-            {
-                await clientWebSocket.ConnectAsync(uri, CancellationToken.None);
-                Console.WriteLine("Connected to " + uri.ToString());
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Connect error... " + e.Message);
-            }
-        }
+
 
 
         private async Task TcpSendStr(string msgStr)
@@ -73,13 +65,17 @@ namespace Client.CommunicationClient
 
     }
 
-    public abstract class MyUdpClient
+    public abstract class SocketClient
     {
-        private readonly IPEndPoint _serverEndPoint;
-        private readonly UdpClient _client;
-        private IPEndPoint _remoteEndPoint;
-        private IPEndPoint _localEndPoint;
-        private IPAddress _localIPAddress;
+        private readonly IPEndPoint _serverUdpEndPoint;     // 服务端UDP终结点 Server udp endpoint
+        private readonly IPEndPoint _serverTcpEndPoint;     // 服务端TCP终结点 serverEndPoint
+        private readonly IPAddress _serverIpAddress;        // 服务器IP
+        private readonly UdpClient _client;                 // Udp客户端 UdpClient
+        private IPEndPoint _remoteEndPoint;                 // 远程终结点 remoteEndPoint
+        private IPEndPoint _localEndPoint;                  // 本地终结点 localEndPoint
+        private IPAddress _localIPAddress;                  // 本机IPv4IP local Ipv4
+        private ClientWebSocket _clientWebSocket;            // 网络套接字客户端
+
         private string GetIPAddress()
         {
             var Addresses = Dns.GetHostAddresses(Dns.GetHostName());
@@ -96,24 +92,60 @@ namespace Client.CommunicationClient
         /// <summary>
         /// Create UDPClient
         /// </summary>
-        /// <param name="ip">Target IP</param>
-        /// <param name="port">Target port</param>
-        public MyUdpClient(string ip, int port)
+        /// <param name="serverIp">Target IP</param>
+        /// <param name="udpPort">Target port</param>
+        public SocketClient(string serverIp, int udpPort, int tcpPort)
         {
+            _serverIpAddress = IPAddress.Parse(serverIp);
             _localIPAddress = IPAddress.Parse(GetIPAddress());
-            _serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
+            _serverUdpEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), udpPort);
+            _serverTcpEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), tcpPort);
             _client = new UdpClient();
             _remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
         }
 
-        public void StartRecv(int port)
+        public void UDPStartRecv(int port)
         {
-            _localEndPoint = new IPEndPoint(_localIPAddress, port);
-            Thread udpListener = new Thread(RecvData);
+            Thread udpListener = new Thread(UdpRecvData);
             udpListener.Start();
         }
 
-        private void RecvData()
+        /// <summary>
+        /// 创建websocketclient
+        /// </summary>
+        /// <returns></returns>
+        private async Task CreateWebSocketClient()
+        {
+            Uri uri = new Uri($"ws://{_serverIpAddress}:8080");
+            _clientWebSocket = new ClientWebSocket();
+            try
+            {
+                await _clientWebSocket.ConnectAsync(uri, CancellationToken.None);
+                Console.WriteLine("Connected to " + uri.ToString());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Connect error... " + e.Message);
+            }
+        }
+        /// <summary>
+        /// 关闭websocketclient
+        /// </summary>
+        /// <returns></returns>
+        private async Task CloseWebSocketClient()
+        {
+            try
+            {
+                await _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing the connection", CancellationToken.None);
+                Console.WriteLine("ClientWebsocket closed...");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("ClientWebsocket closed..." + e.Message);
+            }
+        }
+
+        private void UdpRecvData()
         {
             byte[] receivedData;
             while (true)
@@ -202,7 +234,7 @@ namespace Client.CommunicationClient
                 Buffer.BlockCopy(BitConverter.GetBytes(messageLength), 0, packetData, 0, sizeof(int));
                 Buffer.BlockCopy(messageBytes, 0, packetData, sizeof(int), messageLength);
 
-                _ = _client.Send(packetData, packetData.Length, _serverEndPoint);
+                _ = _client.Send(packetData, packetData.Length, _serverUdpEndPoint);
             }
             catch (Exception e)
             {
