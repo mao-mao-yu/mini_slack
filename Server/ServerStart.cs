@@ -10,12 +10,12 @@ using System.IO;
 using System.Net;
 using Server;
 
-class Start
+internal class ServerStart
 {
-    static async Task Main(string[] args)
+    private static void Main(string[] args)
     {
         AppServer server = new AppServer();
-        await server.StartListening();
+        server.Start();
     }
 
 }

@@ -13,15 +13,15 @@ namespace Client.IClient
         /// <param name="username">ユーザネーム</param>
         /// <param name="password">パスワード</param>
         /// <returns></returns>
-        public Task PerformLogin(string username, string password);
+        //public Task PerformLogin(string username, string password);
 
-        /// <summary>
-        /// 登録
-        /// </summary>
-        /// <param name="username">ユーザネーム</param>
-        /// <param name="password">パスワード</param>
-        /// <returns></returns>
-        public Task Register(string username, string password);
+        ///// <summary>
+        ///// 登録
+        ///// </summary>
+        ///// <param name="username">ユーザネーム</param>
+        ///// <param name="password">パスワード</param>
+        ///// <returns></returns>
+        //public Task Register(string username, string password);
 
         /// <summary>
         /// メッセージを送る

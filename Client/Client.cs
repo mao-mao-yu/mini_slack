@@ -9,66 +9,85 @@ using Client.Encryption;
 using System.Net.WebSockets;
 using System.Threading;
 using Newtonsoft.Json;
+using System.Net;
+using System.Net.Sockets;
+using System.IO;
+using Client.CommunicationClient;
 
 namespace Client
 {
-    class AppClient : IUser
+    public class AppClient : MyUdpClient
     {
         //private readonly Dictionary<string, object> jsonData = JsonFileHandler.LoadJsonObjFromFile(@"UserData.json");
-        private readonly Dictionary<string, object> jsonData = new Dictionary<string, object>() {};
-        private string username;
-        private string password;
-        private bool isLogged = false;
-        private Response Response { get; set; }
-        private Uri ServerUri { get; set; }
-        private ClientWebSocket ClientWebSocket { get; set; }
+        private const string UserFileName = @"UserData.json";
+        private Dictionary<string, object> jsonData = new Dictionary<string, object>() { };
 
-        public AppClient(Uri serverUri)
+        public AppClient(string ip,int port) : base(ip, port) { }
+        public void Start()
         {
-            //username = (string)jsonData["username"];
-            //password = (string)jsonData["password"];
-            //isLogged = (bool)jsonData["isLogged"];
-            ServerUri = serverUri;
+            StartRecv(8888);
+
         }
 
-        public async Task Connect()
+        public async Task<bool> Register(string username, string password)
         {
-            ClientWebSocket = new ClientWebSocket();
+            return await PerfromRegister(username, password);
+        }
+
+        private async Task<bool> PerfromRegister(string username, string password)
+        {
+            Request request = new Request("register", username, password);
+            string jsonStr = request.GetJsonStr();
+
             try
             {
-                await ClientWebSocket.ConnectAsync(ServerUri, CancellationToken.None);
-                Task receiveTask = Task.Run(StartReceive);
-            }
-            catch (Exception ex)
-            {
-                await ClientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
-                Console.WriteLine(ex.Message);
-            }
-        }
+                await TcpSendStr(jsonStr);
 
-        public async Task StartReceive()
-        {
-            byte[] receiveBuffer = new byte[1024];
+                string recv = await TcpRecvStr();
+                Response response = new Response(recv);
+                Dictionary<string, string> jsonDict = response.Get();
 
-            while (ClientWebSocket.State == WebSocketState.Open)
-            {
-                WebSocketReceiveResult result = await ClientWebSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
-                if (result.MessageType == WebSocketMessageType.Text)
+                bool getActionRes = jsonDict.TryGetValue("action", out string action);
+                if (getActionRes == false)
                 {
-                    string jsonStr = Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
-                    Response response = new Response(jsonStr);
-                    Dictionary<string, string> responseDict = response.Get();
-                    ResponseHandler responseHandler = new ResponseHandler(responseDict);
+                    return false;
                 }
+                if (action.Equals("register") == false)
+                {
+                    return false;
+                }
+                if (!jsonDict.TryGetValue("result", out string getResultRes))
+                {
+                    return false;
+                }
+
+                Console.WriteLine(jsonDict["msg"]);
+                return bool.Parse(getResultRes);
             }
+            catch (Exception e)
+            {
+                Console.WriteLine("Login error..." + e.Message);
+            }
+            return false;
         }
 
-        public async Task SendJson(Request request)
+        public async Task<bool> CheckLogin()
         {
-            string jsonStr = JsonConvert.SerializeObject(request.Get());
-            byte[] msgBytes = Encoding.UTF8.GetBytes(jsonStr);
-            await ClientWebSocket.SendAsync(new ArraySegment<byte>(msgBytes), WebSocketMessageType.Binary, true, CancellationToken.None);
+            if (!File.Exists(UserFileName))
+            {
+                return false;
+            }
+            string UserDataStr = File.ReadAllText(UserFileName);
+            Dictionary<string, string> UserDataDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(UserDataStr);
+            string username = UserDataDict["username"];
+            string password = UserDataDict["password"];
+            bool res = await PerformLogin(username, password);
+            return res;
+        }
 
+        public async Task<bool> Login(string username, string password)
+        {
+            return await PerformLogin(username, password);
         }
 
         /// <summary>
@@ -77,20 +96,51 @@ namespace Client
         /// <param name="username"></param>
         /// <param name="password"></param>
         /// <returns></returns>
-        public async Task PerformLogin(string username, string password)
+        private async Task<bool> PerformLogin(string username, string password)
         {
-            if (isLogged == true) return;
-            password = PasswordEncryption.Encrypt(password);
             Request request = new Request("login", username, password);
-            await SendJson(request);
+            string jsonStr = request.GetJsonStr();
+            try
+            {
+                // 发送登录消息
+                await TcpSendStr(jsonStr);
+
+                // 接受登录验证响应
+                string recv = await TcpRecvStr();
+
+                // 解析响应
+                Response response = new Response(recv);
+                Dictionary<string, string> jsonDict = response.Get();
+                bool getActionRes = jsonDict.TryGetValue("action", out string action);
+                if (getActionRes == false)
+                {
+                    return false;
+                }
+                if (action.Equals("login") == false)
+                {
+                    return false;
+                }
+                if (!jsonDict.TryGetValue("result", out string getResultRes))
+                {
+                    return false;
+                }
+                Console.WriteLine(jsonDict["msg"]);
+                return bool.Parse(getResultRes);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Login error..." + e.Message);
+            }
+            return false;
         }
 
-        public async Task Register(string username, string password)
+        public override void ActionHandler(Dictionary<string, string> jsonDict)
         {
-            string EncryptedPassword = PasswordEncryption.Encrypt(password);
-            Request request = new Request("register", username, EncryptedPassword);
-            await SendJson(request);
+            throw new NotImplementedException();
         }
+
+
+
 
         //public Response SendMsg(string username, string msg)
         //{
@@ -111,34 +161,5 @@ namespace Client
         //{
         //}
 
-    }
-    public class ResponseHandler : ActionHandler
-    {
-        public ResponseHandler(Dictionary<string, string> responseDict) : base(responseDict) 
-        {
-            ActionProcessing();
-        }
-
-
-    }
-
-    public class ActionHandler
-    {
-        protected Dictionary<string, string> ResponseDict { get; set; }
-        private readonly Dictionary<string, object> ActionDict = new Dictionary<string, object>() { };
-
-        public ActionHandler(Dictionary<string, string> responseDict)
-        {
-            ResponseDict = responseDict;
-        }
-
-        public void ActionProcessing()
-        {
-            string action = ResponseDict["action"];
-            if (action.Equals("login"))
-            {
-                Console.WriteLine("登录成功");
-            }
-        }
     }
 }

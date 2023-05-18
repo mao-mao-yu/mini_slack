@@ -14,102 +14,95 @@ namespace Server
 {
     public class AppServer : IAppServer
     {
-        public async Task StartListening()
-        {
-            HttpListener listener = new HttpListener();
-            listener.Prefixes.Add("http://localhost:5000/");
-            listener.Start();
-            Console.WriteLine("Listening...");
+        //private const int bufferSize = 2048;
+        private UdpClient udpClient;
+        private IPEndPoint remoteEndPoint;
 
+        public void Start()
+        {
+            udpClient = new UdpClient(8888);
+            remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
+            _ = udpClient.BeginReceive(ReceiveCallback, null);
             while (true)
             {
-                HttpListenerContext listenerContext = await listener.GetContextAsync();
-                if (listenerContext.Request.IsWebSocketRequest)
-                {
-                    HttpListenerWebSocketContext webSocketContext = await listenerContext.AcceptWebSocketAsync(null);
-                    WebSocket webSocket = webSocketContext.WebSocket;
-                    Console.WriteLine($"Connected to {webSocket.State}");
-                    await HandleClient(webSocket);
-                }
-                else
-                {
-                    listenerContext.Response.StatusCode = 400;
-                    listenerContext.Response.Close();
-                }
+                Thread.Sleep(1000);
             }
+
+
         }
 
-        public async Task HandleClient(WebSocket webSocket)
+        private void ReceiveCallback(IAsyncResult ar)
         {
-            ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
-            WebSocketReceiveResult result;
             try
             {
-                do
-                {
-                    result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-                    if (result.MessageType == WebSocketMessageType.Text)
-                    {
-                        string receivedData = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
-                        // 解析 JSON
-                        Request request = new Request(receivedData);
-                        Response response = ActionHandler(request);
-                        // 如果需要，你可以向客户端发送响应：
-                        //byte[] bytesResponse = Encoding.UTF8.GetBytes(response.GetJsonStr());
-                        //ArraySegment<byte> sendBuffer = new ArraySegment<byte>(bytesResponse);
-                        //await webSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None);
-                    }
-                }
-                while (!result.EndOfMessage && webSocket.State == WebSocketState.Open);
+                byte[] receiveData = udpClient.EndReceive(ar, ref remoteEndPoint);
+                ProcessReceiveData(receiveData);
+
+                _ = udpClient.BeginReceive(ReceiveCallback, null);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine(ex.Message);
-            }
-            finally
-            {
-                if (webSocket.State == WebSocketState.Open)
-                {
-                    // 等待发送队列中的所有数据发送完成
-                    while (webSocket.State == WebSocketState.Open && webSocket.CloseStatus == null)
-                    {
-                        await Task.Delay(100);
-                    }
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
-                }
+                Console.WriteLine($"Error receiving UDP packet: {e.Message}");
             }
         }
 
-        public Response ActionHandler(Request request)
+        private void ProcessReceiveData(byte[] receivedData)
         {
-            Dictionary<string, string> requestDict = request.Get();
-            foreach (var value in requestDict.Values)
+            int offset = 0;
+            while (offset < receivedData.Length)
             {
-                Console.WriteLine(value);
-            }
-            string action = requestDict["action"];
-            bool flg;
-
-            if (action.Equals("login"))
-            {
-                foreach (var value in requestDict.Values)
+                if (offset + sizeof(int) > receivedData.Length)
                 {
-                    Console.WriteLine(value);
+                    Console.WriteLine($"Error: Packet is incomplete. Missing {sizeof(int)} bytes for packet length.");
+                    return;
                 }
+                // 数据长度转int
+                int packetLength = BitConverter.ToInt32(receivedData, offset);
+                offset += sizeof(int);
+
+                if (offset + packetLength > receivedData.Length)
+                {
+                    Console.WriteLine($"Error: Packet is incomplete. Missing {offset + packetLength - receivedData.Length} bytes for packet data.");
+                    return;
+                }
+                // 用请求头的数据长取定量数据
+                byte[] packetData = new byte[packetLength];
+                Buffer.BlockCopy(receivedData, offset, packetData, 0, packetLength);
+
+                // 转string并打印
+                string packetMessage = Encoding.UTF8.GetString(packetData);
+                Dictionary<string, string> jsonDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(packetMessage);
+                ActionHandler(jsonDict);
+                Console.WriteLine("Received packet: " + packetMessage);
+
+                offset += packetLength;
             }
-
-            return null;
-
         }
-        public bool CheckPassword()
+
+        //private void ActionHandler(Dictionary<string, string> jsonDict)
+        //{
+        //    string action = jsonDict["action"];
+        //    if (action.Equals("login"))
+        //    {
+        //        if (CheckUsername(jsonDict["username"]))
+        //        {
+        //            Console.WriteLine("Username Checked");
+        //            if (CheckPassword(jsonDict["password"]))
+        //            {
+        //                Console.WriteLine("Password  Checked");
+        //            }
+        //        }
+        //    }
+        //}
+
+        public bool CheckPassword(string password)
         {
-            Console.WriteLine("密码正确");
             return true;
         }
 
-        public bool CheckUsername()
+        public bool CheckUsername(string username)
         {
-            Console.WriteLine("用户名不存在");
+
             return true;
         }
         public void FileHandler()

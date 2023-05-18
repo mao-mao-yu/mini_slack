@@ -27,7 +27,7 @@ namespace Client.DataType
 
     class Request
     {
-        private readonly Dictionary<string, string> RequestBaseData = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> RequestBaseDict = new Dictionary<string, string>();
 
         /// <summary>
         /// request paras
@@ -37,11 +37,15 @@ namespace Client.DataType
         /// <param name="password">パスワード</param>
         public Request(string action, string username, string password)
         {
-            RequestBaseData.Add("action", action);
-            RequestBaseData.Add("username", username);
-            RequestBaseData.Add("password", password);
+            RequestBaseDict.Add("action", action);
+            RequestBaseDict.Add("username", username);
+            RequestBaseDict.Add("password", password);
         }
 
+        public Request()
+        {
+
+        }
         /// <summary>
         /// 外部アクセス方法
         /// </summary>
@@ -49,12 +53,17 @@ namespace Client.DataType
         /// <param name="value"></param>
         public void Add(string key, string value)
         {
-            RequestBaseData.Add(key, value);
+            RequestBaseDict.Add(key, value);
         }
 
         public Dictionary<string, string> Get()
         {
-            return RequestBaseData;
+            return RequestBaseDict;
+        }
+
+        public string GetJsonStr()
+        {
+            return JsonConvert.SerializeObject(RequestBaseDict);
         }
     }
 }
