@@ -14,8 +14,13 @@ internal class ServerStart
 {
     private static void Main(string[] args)
     {
-        AppServer server = new AppServer();
+        // udp,tcp
+        AppServer server = new AppServer(11000, 8888);
         server.Start();
+        while (true)
+        {
+
+        }
     }
 
 }
