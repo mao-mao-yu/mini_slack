@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Client.Commons;
+using System.Collections.Concurrent;
 
 namespace Client.ClientCommunication
 {
@@ -18,25 +19,40 @@ namespace Client.ClientCommunication
     /// </summary>
     public abstract class BaseClient
     {
-        protected Queue<Dictionary<string, string>> msgDictQ = new Queue<Dictionary<string, string>>();
+        protected readonly ConcurrentQueue<Dictionary<string, string>> msgDictQ = new ConcurrentQueue<Dictionary<string, string>>();
         private IPAddress _localIPAddress;            // 本地IP Local ip
         protected IPAddress LocalIPAddress => _localIPAddress;
 
+        /// <summary>
+        /// Get the local IPv4 address when instantiating an instance
+        /// </summary>
         public BaseClient()
         {
             _localIPAddress = GetLocalIPAddress();
         }
 
+        /// <summary>
+        /// Put a message in ConcurrentQueue.
+        /// </summary>
+        /// <param name="message"></param>
         protected void EnqueueMessage(Dictionary<string, string> message)
         {
             msgDictQ.Enqueue(message);
         }
 
+        /// <summary>
+        /// Get a message dictionary from ConcurrentQueue.
+        /// </summary>
+        /// <returns>Return a Dictionary type message</returns>
         protected Dictionary<string, string> DequeueMessage()
         {
-            return msgDictQ.Dequeue();
+            return msgDictQ.TryDequeue(out Dictionary<string, string> message) ? message : null;
         }
 
+        /// <summary>
+        /// Get local IPv4 address.
+        /// </summary>
+        /// <returns>Return an IPv4 address of type IPAddress.</returns>
         private static IPAddress GetLocalIPAddress()
         {
             IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
@@ -50,8 +66,14 @@ namespace Client.ClientCommunication
             return IPAddress.Parse("127.0.0.1");
         }
 
-        protected abstract void Connect();
+        /// <summary>
+        /// Connect to a TCP server.
+        /// </summary>
+        public abstract void Connect();
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected abstract void Listening();
 
         public abstract Task Send(string message);
@@ -62,7 +84,7 @@ namespace Client.ClientCommunication
 
         protected abstract void ProcessReceivedData(byte[] receivedData);
     }
-    public abstract class TClient : BaseClient
+    public class TClient : BaseClient
     {
         private readonly TcpClient _tcpClient;
         private readonly IPAddress _serverIPAddress;
@@ -82,8 +104,7 @@ namespace Client.ClientCommunication
             _serverIPEndPoint = new IPEndPoint(_serverIPAddress, tcpPort);
             _tcpClient = new TcpClient();
         }
-
-        protected override void Connect()
+        public override void Connect()
         {
             try
             {
@@ -109,8 +130,7 @@ namespace Client.ClientCommunication
                 byte[] lengthData = BitConverter.GetBytes(msgLength);
 
                 using NetworkStream networkStream = _tcpClient.GetStream();
-                await networkStream.WriteAsync(lengthData, 0, sizeof(int));
-                await networkStream.WriteAsync(bytesMsg, sizeof(int), msgLength);
+                await networkStream.WriteAsync(bytesMsg, 0, msgLength);
             }
             catch (Exception e)
             {
@@ -168,6 +188,11 @@ namespace Client.ClientCommunication
                 Console.WriteLine("Error deserializing JSON: " + ex.Message);
             }
         }
+
+        protected override void Listening()
+        {
+            throw new NotImplementedException();
+        }
     }
     public class UClient : BaseClient
     {
@@ -197,6 +222,10 @@ namespace Client.ClientCommunication
             _client = new UdpClient(_localIPEndPoint);                                      // Instance a udp client bind local IP end point
         }
 
+        public override void Connect()
+        {
+            throw new NotImplementedException();
+        }
         protected override void StartRecv()
         {
             Thread udpListener = new Thread(Recv);
@@ -305,10 +334,10 @@ namespace Client.ClientCommunication
             }
         }
 
-        protected override void Connect()
-        {
-            throw new NotImplementedException();
-        }
+        //protected override void Connect()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         protected override void Listening()
         {

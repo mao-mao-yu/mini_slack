@@ -23,9 +23,10 @@ namespace Server.Data
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        public void Add(string key, string value)
+        public Response Add(string key, string value)
         {
             RequestBaseData.Add(key, value);
+            return this;
         }
 
         public Dictionary<string, string> Get()

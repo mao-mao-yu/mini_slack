@@ -3,29 +3,27 @@ using System.Collections.Generic;
 using System.Text;
 using Server.IServer;
 using System.Net;
-using System.Net.Sockets;
-using System.Threading.Tasks;
-using Server.Data;
-using System.Net.WebSockets;
-using System.Threading;
-using Newtonsoft.Json;
-using Server.ServerCommunication;
+using Server.SocketAsyncCore;
 
 namespace Server
 {
-    public class AppServer : IAppServer
+    public class AppServer : SocketAsyncTcpServer
     {
-        private readonly MyServer server;
-        public AppServer(int udpPort, int tcpPort)
+        public AppServer(int listenPort, int maxClient) : base(IPAddress.Any, listenPort, maxClient)
         {
-            // server
-            server = new MyServer(udpPort, tcpPort);
         }
 
-        public void Start()
+        public AppServer(IPAddress localIPAddress, int listenPort, int maxClient) : base(localIPAddress, listenPort, maxClient)
         {
-            server.TcpStartListening();
-            server.UdpStartReceiving();
+        }
+
+        public AppServer(IPEndPoint localEP, int maxClient) : base(localEP, maxClient)
+        {
+        }
+
+        protected override void ActionHandler(string data)
+        {
+            throw new NotImplementedException();
         }
 
         public bool CheckPassword(string password)
