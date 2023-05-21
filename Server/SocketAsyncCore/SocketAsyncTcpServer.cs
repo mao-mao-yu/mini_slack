@@ -23,7 +23,7 @@ namespace Server.SocketAsyncCore
         /// <summary>
         /// Logger
         /// </summary>
-        private Logger lg;
+        protected Logger lg;
 
         /// <summary>
         /// Listener Socket
@@ -473,7 +473,7 @@ namespace Server.SocketAsyncCore
 
                         string data = Encoding.UTF8.GetString(bytesData);
                         lg.DEBUG($"收到 {s.RemoteEndPoint} 数据为 {data}");
-                        //ActionHandler(data);
+                        ActionHandler(data);
                     }
                     if (!s.ReceiveAsync(e))//为接收下一段数据，投递接收请求，这个函数有可能同步完成，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件  
                     {

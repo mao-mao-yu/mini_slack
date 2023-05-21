@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
+using Server.Encryption;
 
 namespace Server.Data
 {
@@ -34,7 +35,7 @@ namespace Server.Data
             return RequestBaseData;
         }
 
-        public string GetJsonStr()
+        public new string ToString()
         {
             return JsonConvert.SerializeObject(RequestBaseData);
         }
@@ -42,22 +43,34 @@ namespace Server.Data
 
     public class Request
     {
-        private Dictionary<string, string> JsonDictResponse { get; set; }
+        private Dictionary<string, string> JsonDictRequest { get; set; }
 
         public Request(byte[] metaData)
         {
             string jsonStr = Encoding.UTF8.GetString(metaData);
-            JsonDictResponse = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
+            JsonDictRequest = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
         }
 
         public Request(string jsonStr)
         {
-            JsonDictResponse = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
+            JsonDictRequest = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
         }
 
-        public Dictionary<string, string> Get()
+        public Dictionary<string, string> GetDict()
         {
-            return JsonDictResponse;
+            return JsonDictRequest;
+        }
+
+        public string Get(string key)
+        {
+            if (JsonDictRequest.ContainsKey(key))
+            {
+                return JsonDictRequest[key];
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

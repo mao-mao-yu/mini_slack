@@ -7,8 +7,9 @@ namespace Server
     /// </summary>
     public enum LogLevel
     {
+        EVERYTHING,
 
-        DEBUG = 1,
+        DEBUG,
 
         INFO,
 

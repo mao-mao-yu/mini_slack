@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
-using Client.ClientCommunication;
+using Client.Encryption;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Text;
@@ -15,8 +15,8 @@ class Program
     static Dictionary<string, string> test = new Dictionary<string, string>()
     {
         {"action", "login"},
-        {"username", "12283fsdfdsfsdfsdfsdfsdfdsfds15965"},
-        {"password", "asdsadasggfggergegregregrefwfrweefedfedadwasdasdasdasdasd" }
+        {"username", "1228315965"},
+        {"password", PasswordEncryption.Encrypt("XfkldptY4327") }
     };
 
     static string FormatTimeSpan(TimeSpan timeSpan)
@@ -27,8 +27,8 @@ class Program
     static void Main(string[] args)
     {
         List<Thread> threads = new List<Thread>();
-        int threadNum = 3000;
-        messageNum = 100;
+        int threadNum = 1;
+        messageNum = 50;
         DateTime startTime = DateTime.Now;
         for (int i = 0; i < threadNum; i++)
         {
@@ -86,7 +86,7 @@ class Program
         {
             try
             {
-                //Thread.Sleep(50);
+                Thread.Sleep(1000);
                 clientSocket.Send(Encoding.UTF8.GetBytes(jsonStr), SocketFlags.None);
                 Console.WriteLine($"向服务器发送消息：{jsonStr}");
             }

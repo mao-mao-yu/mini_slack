@@ -6,8 +6,12 @@ using Newtonsoft.Json;
 
 namespace Server
 {
+    /// <summary>
+    /// Logger
+    /// </summary>
     public class Logger
     {
+        #region Fields
         /// <summary>
         /// 文件锁
         /// </summary>
@@ -52,9 +56,16 @@ namespace Server
         /// 是否写入文件
         /// </summary>
         private readonly bool _configAllWrite;
+        #endregion
 
+        #region Property
+        /// <summary>
+        /// AllWrite属性 是否写入文件
+        /// </summary>
         public bool AllWrite => _configAllWrite;
+        #endregion
 
+        #region Ctor
         public Logger()
         {
             // 获取当前工作路径
@@ -69,7 +80,9 @@ namespace Server
             _configAllWrite = GetConfigAllWrite();
 
         }
+        #endregion
 
+        #region Get config
         /// <summary>
         /// 获取配置文件并转为字典
         /// </summary>
@@ -118,12 +131,14 @@ namespace Server
                 {
                     return false;
                 }
-                return true;
+                else
+                {
+                    return true;
+                }
             }
             return true;
         }
-
-        
+        #endregion
 
         #region To console
         /// <summary>
@@ -189,7 +204,10 @@ namespace Server
             {
                 return;
             }
-            FileWriter(message, logLevel);
+            if (_configAllWrite)
+            {
+                FileWriter(message, logLevel);
+            }
         }
         #endregion
 

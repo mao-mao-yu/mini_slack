@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Server.IServer;
 using System.Net;
 using Server.SocketAsyncCore;
+using Newtonsoft.Json;
+using Server.Data;
+using Server.Encryption;
 
 namespace Server
 {
@@ -23,7 +24,11 @@ namespace Server
 
         protected override void ActionHandler(string data)
         {
-            throw new NotImplementedException();
+            Request request = new Request(data);
+            string encryptedPassword = request.Get("password");
+            string password = "XfkldptY4327";
+            bool res = PasswordEncryption.Verify(password, encryptedPassword);
+            lg.DEBUG(res.ToString());
         }
 
         public bool CheckPassword(string password)

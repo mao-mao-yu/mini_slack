@@ -8,6 +8,10 @@ namespace Server
     public enum OperateLevel
     {
         /// <summary>
+        /// なんでも
+        /// </summary>
+        EVERYTHING = 0,
+        /// <summary>
         /// 微々たる
         /// </summary>
         INSIGNIFICANT = 1,

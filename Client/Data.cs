@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
+using Client.Encryption;
 
 namespace Client.DataType
 {
@@ -39,21 +40,24 @@ namespace Client.DataType
         {
             RequestBaseDict.Add("action", action);
             RequestBaseDict.Add("username", username);
-            RequestBaseDict.Add("password", password);
+            
+            RequestBaseDict.Add("password", PasswordEncryption.Encrypt(password));
         }
 
-        public Request()
+        public Request(string action)
         {
-
+            RequestBaseDict.Add("action", action);
         }
+
         /// <summary>
         /// 外部アクセス方法
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
-        public void Add(string key, string value)
+        public Request Add(string key, string value)
         {
             RequestBaseDict.Add(key, value);
+            return this;
         }
 
         public Dictionary<string, string> Get()
@@ -61,7 +65,7 @@ namespace Client.DataType
             return RequestBaseDict;
         }
 
-        public string GetJsonStr()
+        public new string ToString()
         {
             return JsonConvert.SerializeObject(RequestBaseDict);
         }
