@@ -11,7 +11,7 @@ using System.Text;
 class Program
 {
     static public int messageNum;
-
+    static public IPAddress ip;
     static Dictionary<string, string> test = new Dictionary<string, string>()
     {
         {"action", "login"},
@@ -29,6 +29,7 @@ class Program
         List<Thread> threads = new List<Thread>();
         int threadNum = 1;
         messageNum = 50;
+        ip = IPAddress.Parse("192.168.10.111");
         DateTime startTime = DateTime.Now;
         for (int i = 0; i < threadNum; i++)
         {
@@ -57,7 +58,6 @@ class Program
         try
         {
             int Port = 8888;
-            IPAddress ip = IPAddress.Parse("192.168.0.248");
             clientSocket.Connect(new IPEndPoint(ip, Port));
             byte[] data = new byte[2048];
             int receivedBytes = clientSocket.Receive(data);

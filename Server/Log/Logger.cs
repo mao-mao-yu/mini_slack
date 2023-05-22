@@ -89,7 +89,7 @@ namespace Server
         /// <returns></returns>
         private Dictionary<string, int> GetConfigDictionary()
         {
-            string configJson = File.ReadAllText(_configPath);
+            string configJson = File.ReadAllText(_configPath, Encoding.UTF8);
             return JsonConvert.DeserializeObject<Dictionary<string, int>>(configJson);
         }
 
@@ -265,44 +265,55 @@ namespace Server
         /// <returns></returns>
         public bool FileWriter<T>(string msg, T level)
         {
-            GetNowTime();                                                                               // 今の時間を更新
-            string minuteInterval;
-            string today = _dateTime.ToString("yyyy-MM-dd");                                     // 日付
-            string hour = _dateTime.ToString("HH");                                              // 時間
-            minuteInterval = (_dateTime.Minute / 10 * 10).ToString();                            // 分区分
+            GetNowTime();                                                                                           // 今の時間を更新
+            string fileName = $"{_dateTime:yyyy-MM-dd HH}-{(_dateTime.Minute / 10 * 10)}.txt";                      // テキストファイルネーム
+            (string dayFolderPath, string hourFolderPath) = SetPath();
+            CheckFileExists(dayFolderPath, hourFolderPath);
+            string filePath = Path.Combine(hourFolderPath, fileName);
 
-            StringBuilder sb = new StringBuilder();
-            sb.Append($"[{GetDayStr()}]");
-            string fileName = $"{_dateTime:yyyy-MM-dd HH}-{minuteInterval}.txt";     // テキストファイルネーム
-            string dayFolderPath = Path.Combine(_logFolderPath, today);                                   // 日付フォルダー
+            using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
+            {
+                file.Lock(0,file.Length);
+                using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append($"[{GetDayStr()}] ");
+                    sb.Append($"[{level}] ");
+                    sb.Append(msg);
+                    writer.WriteLineAsync(sb.ToString());
+                    DEBUG($"Written to file : {fileName}...");
+                }
+                file.Unlock(0, file.Length);
+            }
+            return true; // 表示文件写入成功
+        }
+
+        private (string, string) SetPath()
+        {
+            string today = _dateTime.ToString("yyyy-MM-dd");                                            // 日付
+            string hour = _dateTime.ToString("HH");                                                     // 時間
+
+            string dayFolderPath = Path.Combine(_logFolderPath, today);                                 // 日付フォルダー
             string hourFolderPath = Path.Combine(dayFolderPath, hour + "H");                            // 時間区分フォルダー
-            string filePath = Path.Combine(hourFolderPath, fileName);                                   // ファイルパス
-            string header =
-                $"[{GetDayStr()}] [{level}]";                                                           // メッセージヘッダー
 
+            return (dayFolderPath, hourFolderPath);
+        }
+
+        private void CheckFileExists(string dayFolderPath, string hourFolderPath)
+        {
             if (!Directory.Exists(dayFolderPath))
             {
-                WriteMessage($"{dayFolderPath} is not exists. Will create...", LogLevel.DEBUG);
+                DEBUG($"{dayFolderPath} is not exists. Will create...");
                 Directory.CreateDirectory(dayFolderPath);
-                WriteMessage($"{dayFolderPath} is not exists. Folder is created", LogLevel.DEBUG);
+                DEBUG($"{dayFolderPath} is not exists. Folder is created");
             }
 
             if (!Directory.Exists(hourFolderPath))
             {
-                WriteMessage($"{hourFolderPath} is not exists. Will create...", LogLevel.DEBUG);
+                DEBUG($"{hourFolderPath} is not exists. Will create...");
                 Directory.CreateDirectory(hourFolderPath);
-                WriteMessage($"{hourFolderPath} is not exists. Folder is created", LogLevel.DEBUG);
+                DEBUG($"{hourFolderPath} is not exists. Folder is created");
             }
-            lock (lockObject)
-            {
-                using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
-                {
-                    using StreamWriter writer = new StreamWriter(file);
-                    writer.WriteLine($"{header} {msg}");
-                    WriteMessage($"Written to file : {fileName}...", LogLevel.DEBUG);
-                }
-            }
-            return true; // 表示文件写入成功
         }
         #endregion
     }

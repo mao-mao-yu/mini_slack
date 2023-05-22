@@ -11,7 +11,7 @@ namespace Server.Data
         private readonly Dictionary<string, string> RequestBaseData = new Dictionary<string, string>();
 
         /// <summary>
-        /// request paras
+        /// request params
         /// </summary>
         /// <param name="action">動作</param>
         public Response(string action)
@@ -61,6 +61,11 @@ namespace Server.Data
             return JsonDictRequest;
         }
 
+        /// <summary>
+        /// Use key to try get a value.
+        /// </summary>
+        /// <param name="key">Key</param>
+        /// <returns>Return value if key in dict,else return null</returns>
         public string Get(string key)
         {
             if (JsonDictRequest.ContainsKey(key))

@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Net.Sockets;
 using System.Threading;
 using System.Net;
-using Server;
-using System.Threading.Tasks;
 
 namespace Server.SocketAsyncCore
 {
@@ -154,7 +151,7 @@ namespace Server.SocketAsyncCore
 
         #endregion
 
-        #region 初始化
+        #region Init
 
         /// <summary>  
         /// 初始化函数  
@@ -237,7 +234,7 @@ namespace Server.SocketAsyncCore
             {
                 IsRunning = false;
                 _socketServer.Close();
-                //TODO 关闭对所有客户端的连接  
+                //Close all socket 
                 SocketUserTokenList.CloseAll();
             }
         }
@@ -490,7 +487,7 @@ namespace Server.SocketAsyncCore
 
         #endregion
 
-        #region 回调函数
+        #region Callback
         /// <summary>  
         /// 当Socket上的发送或接收请求被完成时，调用此函数  
         /// </summary>  

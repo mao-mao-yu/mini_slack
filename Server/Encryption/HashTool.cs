@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace Server.Encryption
+namespace Server.Encryption.HashTool
 {
-    public static class PasswordEncryption
+    public static class PasswordEncryptionHash
     {
         private const int SaltSize = 16; // 加盐大小，以字节为单位
         private const int Iterations = 10000; // 迭代次数，用于增加计算成本

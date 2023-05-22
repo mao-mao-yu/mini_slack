@@ -27,7 +27,8 @@ internal class ServerStart
 
         try
         {
-            IPAddress IP = IPAddress.Parse("192.168.0.248");
+            //IPAddress IP = IPAddress.Parse("192.168.0.248");
+            IPAddress IP = IPAddress.Parse("192.168.10.111");
             int parallelNum = 5000;
             int port = 8888;
             

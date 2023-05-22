@@ -4,12 +4,44 @@ using System.Net;
 using Server.SocketAsyncCore;
 using Newtonsoft.Json;
 using Server.Data;
-using Server.Encryption;
+using Server.Encryption.HashTool;
+using Server.Encryption.AesTool;
 
 namespace Server
 {
     public class AppServer : SocketAsyncTcpServer
     {
+        delegate void MyDelegete(Request request);
+
+        private readonly Dictionary<string, MyDelegete> methodDict = new Dictionary<string, MyDelegete>()
+        {
+            {"login",           LoginAction},
+            {"register",        RegisterAction},
+            {"privatechat",     PrivateChatAction},
+            {"groupchat",       GroupChatAction},
+            {"getfriendslist",  GetFriendsListAction},
+            {"getgroupmember",  GetGroupMemberAction},
+            {"block",           BlockAction},
+        };
+
+        private static string Key;
+        public static string KEY
+        {
+            get
+            {
+                if (Key == null)
+                {
+                    throw new Exception("Key is null...");
+                }
+                return Key;
+            }
+            set
+            {
+                Key = value;
+            }
+        }
+
+        #region ctor
         public AppServer(int listenPort, int maxClient) : base(IPAddress.Any, listenPort, maxClient)
         {
         }
@@ -21,39 +53,71 @@ namespace Server
         public AppServer(IPEndPoint localEP, int maxClient) : base(localEP, maxClient)
         {
         }
+        #endregion
 
         protected override void ActionHandler(string data)
         {
+            // Create a request obj
             Request request = new Request(data);
-            string encryptedPassword = request.Get("password");
-            string password = "XfkldptY4327";
-            bool res = PasswordEncryption.Verify(password, encryptedPassword);
-            lg.DEBUG(res.ToString());
+
+            // Get action
+            string action = request.Get("action");
+            if (action == null)                         // Action is null
+            {
+                return;
+            }
+
+            action = action.ToLower();                  // 小文字に変換
+
+            if (methodDict.ContainsKey(action))         // 存在判断
+            {
+                MyDelegete method = methodDict[action];
+                method(request);
+            }
         }
 
-        public bool CheckPassword(string password)
+        private static void LoginAction(Request request)
         {
-            return true;
+            string username = request.Get("username");
+            string encryptedPassword = GetUserData();
+            PasswordEncryptionHash.Verify(
+                PasswordEncryptionAes.Decrypt(request.Get("password"), KEY),
+                encryptedPassword);
         }
 
-        public bool CheckUsername(string username)
+        private static void RegisterAction(Request request)
         {
 
-            return true;
-        }
-        public void FileHandler()
-        {
-            throw new NotImplementedException();
         }
 
-        public void Listening()
+        private static void PrivateChatAction(Request request)
         {
-            throw new NotImplementedException();
+
         }
 
-        public void Send()
+        private static void GroupChatAction(Request request)
         {
-            throw new NotImplementedException();
+
+        }
+
+        private static void GetFriendsListAction(Request request)
+        {
+
+        }
+
+        private static void GetGroupMemberAction(Request request)
+        {
+
+        }
+
+        private static void BlockAction(Request request)
+        {
+
+        }
+        
+        private UserData GetUserData()
+        {
+            
         }
     }
 }

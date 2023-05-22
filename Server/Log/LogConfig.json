@@ -1,4 +1,5 @@
 {
   "LogLevel": "1",
-  "OperateLevel": "2"
+  "OperateLevel": "2",
+  "UseFileWriter": "0"
 }
