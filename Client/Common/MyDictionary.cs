@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Client.Commons
+namespace Client.Common
 {
     public class MyDictionary<Tkey, Tvalue> : Dictionary<Tkey, Tvalue>
     {

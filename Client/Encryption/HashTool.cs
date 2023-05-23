@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace Server.Encryption.HashTool
+namespace Client.Encryption
 {
     public static class PasswordEncryptionHash
     {

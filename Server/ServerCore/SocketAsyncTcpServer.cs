@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Net;
 
-namespace Server.SocketAsyncCore
+namespace Server.ServerCore
 {
     public abstract class SocketAsyncTcpServer : IDisposable
     {

@@ -5,17 +5,7 @@ using System.Security.Cryptography;
 
 namespace Server.Encryption
 {
-    /// <summary>
-    /// Rsa key generater
-    /// </summary>
-    /// <param name="keySize"></param>
-    /// <returns></returns>
-    public static class RsaKeyGenerator
-    {
-        
-    }
-
-    public static class RsaEncrypter
+    public static class RsaEncryptor
     {
         #region Fields
         /// <summary>

@@ -9,7 +9,7 @@ using System.Text;
 using System.IO;
 using System.Net;
 using Server;
-using Server.SocketAsyncCore;
+using Server.ServerCore;
 using Server.Encryption;
 
 internal class ServerStart
@@ -54,10 +54,10 @@ internal class ServerStart
         // 解密公钥
         string aesDecryptedPubkey = AesEncrypter.Decrypt(aesEncryptedPubKey, aesKey);
         // 设置编码
-        RsaEncrypter.DefaultEncoding = Encoding.UTF8;
-        byte[] encryptedPassword = RsaEncrypter.Encrypt(bytesPassword, aesDecryptedPubkey);
+        RsaEncryptor.DefaultEncoding = Encoding.UTF8;
+        byte[] encryptedPassword = RsaEncryptor.Encrypt(bytesPassword, aesDecryptedPubkey);
         Console.WriteLine(encryptedPassword.Length);
-        string decryptedPassword = RsaEncrypter.Decrypt(encryptedPassword, priKey);
+        string decryptedPassword = RsaEncryptor.Decrypt(encryptedPassword, priKey);
         if (password.Equals(decryptedPassword))
         {
             Console.WriteLine("Login successful...");

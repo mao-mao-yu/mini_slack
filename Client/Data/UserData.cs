@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Server;
+using Client.Log;
+using Client.Converter;
 
-namespace Server.Data
+namespace Client.Data
 {
     public class UserData
     {
@@ -31,7 +32,7 @@ namespace Server.Data
             {
                 try
                 {
-                    _dataDict = Converter.GetJsonObj<Dictionary<string, object>>(File.ReadAllText(filePath));
+                    _dataDict = JsonConverter.GetJsonObj<Dictionary<string, object>>(File.ReadAllText(filePath));
                 }
                 catch (Exception e)
                 {
@@ -73,7 +74,7 @@ namespace Server.Data
                 using (StreamWriter sw = new StreamWriter(fileStream))
                 {
                     // 写入内容
-                    sw.WriteAsync(Converter.GetJsonStr(_dataDict));
+                    _ = sw.WriteAsync(JsonConverter.GetJsonStr(_dataDict));
                 }
 
                 // 释放文件锁定

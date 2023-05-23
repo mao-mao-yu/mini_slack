@@ -1,30 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Client.IClient;
-using Client.FileHandler;
-using System.Threading.Tasks;
-using Client.DataType;
-using Client.Encryption;
 using System.Net.WebSockets;
 using System.Threading;
 using Newtonsoft.Json;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
-using Client.ClientCommunication;
+using System.Threading.Tasks;
+
+using Client.Encryption;
+using Client.FileHandler;
 using Client.Commons;
 
-namespace Client
+
+namespace Client.ClientCore
 {
-    public class AppClient
+    public class Client
     {
         //private readonly Dictionary<string, object> jsonData = JsonFileHandler.LoadJsonObjFromFile(@"UserData.json");
         private const string UserFileName = @"UserData.json";
         private Dictionary<string, object> jsonData = new Dictionary<string, object>() { };
 
-        public AppClient(string ip,int port)
-        { 
+        public Client(string ip, int port)
+        {
         }
 
         //public async Task<bool> Register(string username, string password)

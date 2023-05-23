@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Server.Data
+namespace Client.Data
 {
     public class GroupData
     {

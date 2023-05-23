@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
-using Server.Encryption;
+using Client.Encryption;
 
-namespace Server.Data
+namespace Client.Data
 {
     public class Response
     {

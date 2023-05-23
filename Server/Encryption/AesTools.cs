@@ -1,156 +1,101 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using System.Security.Cryptography;
-using System.Linq;
+using System.IO;
 
 namespace Server.Encryption
 {
     public static class AesEncrypter
     {
-
-        private static readonly int AESKeyLength = 32;          //AES加密的密码为32位
-        private static readonly char AESFillChar = 'Z';         //AES密码填充字符
-
-        public static string DefaultPassword = "123456abc";     //Default password
-
+        public static Encoding DefaultEncoding { get; set; } = Encoding.UTF8;
+        public static int KeySize { get; } = 256;
 
         /// <summary>
-        /// 加密
+        /// Random Key
         /// </summary>
-        /// <param name="str">要加密的 string 字符串</param>
-        /// <param name="key"></param>
+        /// <param name="keySize"></param>
         /// <returns></returns>
-        public static string Encrypt(string str, string key)
+        public static byte[] GenerateRandomKey(int keySize)
         {
-            try
+            using (Aes aes = Aes.Create())
             {
-                ///Format Key to AESKeyLength
-                key = FmtPassword(key);
-                byte[] keyArray = Encoding.UTF8.GetBytes(key);
-                byte[] toEncryptArray = Encoding.UTF8.GetBytes(str);
+                aes.KeySize = keySize;
+                aes.GenerateKey();
+                return aes.Key;
+            }
+        }
 
-                RijndaelManaged rDel = new RijndaelManaged
+        /// <summary>
+        /// Generate RandomIV
+        /// </summary>
+        /// <returns></returns>
+        public static byte[] GenerateRandomIV()
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.GenerateIV();
+                return aes.IV;
+            }
+        }
+
+        /// <summary>
+        /// Encrypt
+        /// </summary>
+        /// <param name="plainText">Text</param>
+        /// <param name="key">Aes key</param>
+        /// <param name="iv">Vector iv</param>
+        /// <returns></returns>
+        public static byte[] Encrypt(string plainText, byte[] key, byte[] iv)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    Key = keyArray,
-                    Mode = CipherMode.ECB,
-                    Padding = PaddingMode.PKCS7
-                };
+                    using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                    {
+                        byte[] plainBytes = DefaultEncoding.GetBytes(plainText);
+                        cs.Write(plainBytes, 0, plainBytes.Length);
+                        cs.FlushFinalBlock();
+                    }
 
-                ICryptoTransform cTransform = rDel.CreateEncryptor();
-                byte[] resultArray = cTransform.TransformFinalBlock(toEncryptArray, 0, toEncryptArray.Length);
-
-                return Convert.ToBase64String(resultArray, 0, resultArray.Length);
+                    return ms.ToArray();
+                }
             }
-            catch { }
-            return str;
         }
 
         /// <summary>
-        /// 加密
+        /// Decrypt
         /// </summary>
-        /// <param name="array">要加密的 byte[] 数组</param>
+        /// <param name="cipherData"></param>
         /// <param name="key"></param>
+        /// <param name="iv"></param>
         /// <returns></returns>
-        public static byte[] Encrypt(byte[] array, string key)
+        public static byte[] Decrypt(byte[] cipherData, byte[] key, byte[] iv)
         {
-            try
+            byte[] decrypted;
+            using (Aes aes = Aes.Create())
             {
-                key = FmtPassword(key);
-                byte[] keyArray = Encoding.UTF8.GetBytes(key);
+                aes.Key = key;
+                aes.IV = iv;
 
-                RijndaelManaged rDel = new RijndaelManaged();
-                rDel.Key = keyArray;
-                rDel.Mode = CipherMode.ECB;
-                rDel.Padding = PaddingMode.PKCS7;
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
 
-                ICryptoTransform cTransform = rDel.CreateEncryptor();
-                byte[] resultArray = cTransform.TransformFinalBlock(array, 0, array.Length);
-
-                return resultArray;
-            }
-            catch { }
-            return array;
-        }
-
-        /// <summary>
-        /// 解密
-        /// </summary>
-        /// <param name="str">要解密的 string 字符串</param>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public static string Decrypt(string str, string key)
-        {
-            try
-            {
-                key = FmtPassword(key);
-                byte[] keyArray = Encoding.UTF8.GetBytes(key);
-                byte[] toEncryptArray = Convert.FromBase64String(str);
-
-                RijndaelManaged rDel = new RijndaelManaged();
-                rDel.Key = keyArray;
-                rDel.Mode = CipherMode.ECB;
-                rDel.Padding = PaddingMode.PKCS7;
-
-                ICryptoTransform cTransform = rDel.CreateDecryptor();
-                byte[] resultArray = cTransform.TransformFinalBlock(toEncryptArray, 0, toEncryptArray.Length);
-
-                return Encoding.UTF8.GetString(resultArray);
-            }
-            catch { }
-            return str;
-        }
-
-        /// <summary>
-        /// 解密
-        /// </summary>
-        /// <param name="array">要解密的 byte[] 数组</param>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public static byte[] Decrypt(byte[] array, string key)
-        {
-            try
-            {
-                key = FmtPassword(key);
-                byte[] keyArray = Encoding.UTF8.GetBytes(key);
-
-                RijndaelManaged rDel = new RijndaelManaged
+                using (MemoryStream ms = new MemoryStream(cipherData))
                 {
-                    Key = keyArray,
-                    Mode = CipherMode.ECB,
-                    Padding = PaddingMode.PKCS7
-                };
-
-                ICryptoTransform cTransform = rDel.CreateDecryptor();
-                byte[] resultArray = cTransform.TransformFinalBlock(array, 0, array.Length);
-
-                return resultArray;
+                    using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (MemoryStream decryptedMs = new MemoryStream())
+                        {
+                            cs.CopyTo(decryptedMs);
+                            decrypted = decryptedMs.ToArray();
+                        }
+                    }
+                }
+                return decrypted;
             }
-            catch { }
-            return array;
-        }
-
-        /// <summary>
-        /// 格式化密码
-        /// </summary>
-        /// <param name="s">要格式化的密码</param>
-        /// <returns></returns>
-        public static string FmtPassword(string s)
-        {
-            string password = s ?? "";
-
-            //格式化密码
-            if (password.Length < AESKeyLength)
-            {
-                //补足不够长的密码
-                password = password + new string(AESFillChar, AESKeyLength - password.Length);
-            }
-            else if (password.Length > AESKeyLength)
-            {
-                //截取过长的密码
-                password = password.Substring(0, AESKeyLength);
-            }
-            return password;
         }
     }
 }

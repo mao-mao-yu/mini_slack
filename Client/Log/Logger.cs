@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace Server
+namespace Client.Log
 {
     /// <summary>
     /// Logger
