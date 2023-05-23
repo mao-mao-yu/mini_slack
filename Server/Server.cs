@@ -4,8 +4,7 @@ using System.Net;
 using Server.SocketAsyncCore;
 using Newtonsoft.Json;
 using Server.Data;
-using Server.Encryption.HashTool;
-using Server.Encryption.AesTool;
+using Server.Encryption;
 
 namespace Server
 {
@@ -79,9 +78,9 @@ namespace Server
         private static void LoginAction(Request request)
         {
             string username = request.Get("username");
-            string encryptedPassword = GetUserData();
-            PasswordEncryptionHash.Verify(
-                PasswordEncryptionAes.Decrypt(request.Get("password"), KEY),
+            string encryptedPassword = @"";
+            HashEncrypter.Verify(
+                AesEncrypter.Decrypt(request.Get("password"), KEY),
                 encryptedPassword);
         }
 
@@ -117,7 +116,7 @@ namespace Server
         
         private UserData GetUserData()
         {
-            
+            return null;
         }
     }
 }
