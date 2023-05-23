@@ -12,22 +12,7 @@ namespace Server.Encryption
     /// <returns></returns>
     public static class RsaKeyGenerator
     {
-        /// <summary>
-        /// Generate keys
-        /// </summary>
-        /// <param name="keySize"></param>
-        /// <returns></returns>
-        public static (string publicKey, string privateKey) GenerateKeys(int keySize = 2048)
-        {
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
-            {
-                rsa.PersistKeyInCsp = false;
-                string publicKey = rsa.ToXmlString(false);
-                string privateKey = rsa.ToXmlString(true);
-
-                return (publicKey, privateKey);
-            }
-        }
+        
     }
 
     public static class RsaEncrypter
@@ -64,6 +49,7 @@ namespace Server.Encryption
         /// <param name="toString"></param>
         /// <returns></returns>
         public static byte[] Encrypt<T>(T data, string publicKey)
+            where T: class
         {
             byte[] encryptedData;
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
@@ -97,6 +83,7 @@ namespace Server.Encryption
         /// <param name="privateKey">Private key</param>
         /// <returns></returns>
         public static byte[] Decrypt<T>(T data, string privateKey)
+            where T : class
         {
             byte[] decryptedData;
 
@@ -164,12 +151,23 @@ namespace Server.Encryption
                 return rsa.VerifyData(bytesData, signature, DefaultHashAlgorithmName, DefaultRsaSignaturePadding);
             }
         }
+        #endregion
 
-        public static bool VerifyHash(byte[] hashData, string hashStr)
+        #region Key generater
+        /// <summary>
+        /// Generate keys
+        /// </summary>
+        /// <param name="keySize"></param>
+        /// <returns></returns>
+        public static (string publicKey, string privateKey) GenerateKeys(int keySize = 2048)
         {
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
-                rsa.VerifyHash(hashData, hashStr, DefaultHashAlgorithmName);
+                rsa.PersistKeyInCsp = false;
+                string publicKey = rsa.ToXmlString(false);
+                string privateKey = rsa.ToXmlString(true);
+
+                return (publicKey, privateKey);
             }
         }
         #endregion
