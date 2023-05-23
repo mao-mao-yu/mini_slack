@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.Sockets;
 
-namespace Server.ServerCore
+namespace Server.SocketCore
 {
     //这个类是将UserToken进行了再次封装，MSDN对于异步Socket的介绍中总会提到：  
     //若在异步回调中需要查询更多的信息，则应该建立一个小型类来管理回调时传递的Object对象  

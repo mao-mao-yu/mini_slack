@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Net;
 
-namespace Server.ServerCore
+namespace Server.SocketCore
 {
     public abstract class SocketAsyncTcpServer : IDisposable
     {
@@ -313,7 +313,7 @@ namespace Server.ServerCore
 
                         SocketUserTokenList.Add(asyniar);   //Add event to token list
 
-                        // If conncet successful. Send GUID
+                        // If conncet successful. Send GUID and RSA Keys
                         s.Send(Encoding.UTF8.GetBytes(token.ID));
 
                         lg.FINFO($"Client {s.RemoteEndPoint} connected, Have {_clientCount} clients.");
@@ -460,11 +460,6 @@ namespace Server.ServerCore
                     //判断所有需接收的数据是否已经完成  
                     if (s.Available == 0)
                     {
-                        //从侦听者获取接收到的消息。   
-                        //String received = Encoding.ASCII.GetString(e.Buffer, e.Offset, e.BytesTransferred);  
-                        //echo the data received back to the client  
-                        //e.SetBuffer(e.Offset, e.BytesTransferred);  
-
                         byte[] bytesData = new byte[e.BytesTransferred];
                         Array.Copy(e.Buffer, e.Offset, bytesData, 0, bytesData.Length);//从e.Buffer块中复制数据出来，保证它可重用  
 

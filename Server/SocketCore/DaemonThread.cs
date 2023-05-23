@@ -3,7 +3,7 @@ using System.Threading;
 using System.Net.Sockets;
 
 
-namespace Server.ServerCore
+namespace Server.SocketCore
 {
     class DaemonThread : Object
     {

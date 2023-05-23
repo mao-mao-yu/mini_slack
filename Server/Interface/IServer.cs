@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Server.Interface
 {
-    class IServer
+    public interface IServer
     {
     }
 }

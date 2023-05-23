@@ -1,27 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using Server.ServerCore;
-using Newtonsoft.Json;
+using Server.SocketCore;
 using Server.Data;
 using Server.Encryption;
+using Server.Interface;
 
-namespace Server
+namespace Server.ServerCore
 {
-    public class AppServer : SocketAsyncTcpServer
+    public class Service : SocketAsyncTcpServer, IServer
     {
-        delegate void MyDelegete(Request request);
-
-        private readonly Dictionary<string, MyDelegete> methodDict = new Dictionary<string, MyDelegete>()
-        {
-            {"login",           LoginAction},
-            {"register",        RegisterAction},
-            {"privatechat",     PrivateChatAction},
-            {"groupchat",       GroupChatAction},
-            {"getfriendslist",  GetFriendsListAction},
-            {"getgroupmember",  GetGroupMemberAction},
-            {"block",           BlockAction},
-        };
+        
 
         private static string Key;
         public static string KEY
@@ -80,7 +69,7 @@ namespace Server
             string username = request.Get("username");
             string encryptedPassword = @"";
             HashEncrypter.Verify(
-                AesEncrypter.Decrypt(request.Get("password"), KEY),
+                AesEncrypter.Decrypt(request.Get("password"), Convert.FromBase64String(KEY)),
                 encryptedPassword);
         }
 
@@ -113,7 +102,7 @@ namespace Server
         {
 
         }
-        
+
         private UserData GetUserData()
         {
             return null;
