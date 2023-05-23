@@ -266,21 +266,18 @@ namespace Server
         public bool FileWriter<T>(string msg, T level)
         {
             GetNowTime();                                                                                           // 今の時間を更新
-            string fileName = $"{_dateTime:yyyy-MM-dd HH}-{(_dateTime.Minute / 10 * 10)}.txt";                      // テキストファイルネーム
+            string fileName = $"{_dateTime:yyyy-MM-dd HH}：{_dateTime.Minute / 10 * 10}~{_dateTime.Minute / 10 * 10 + 10}.txt";                      // テキストファイルネーム
             (string dayFolderPath, string hourFolderPath) = SetPath();
             CheckFileExists(dayFolderPath, hourFolderPath);
             string filePath = Path.Combine(hourFolderPath, fileName);
-
+            
             using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
             {
-                file.Lock(0,file.Length);
+                file.Lock(0, file.Length);
                 using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append($"[{GetDayStr()}] ");
-                    sb.Append($"[{level}] ");
-                    sb.Append(msg);
-                    writer.WriteLineAsync(sb.ToString());
+                    string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
+                    writer.WriteLineAsync(dumpMsg);
                     DEBUG($"Written to file : {fileName}...");
                 }
                 file.Unlock(0, file.Length);
