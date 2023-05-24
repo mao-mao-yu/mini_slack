@@ -26,42 +26,41 @@ internal class ServerStart
         //    lg.FDEBUG(i.ToString());
         //}
 
-        //try
-        //{
-        //    //IPAddress IP = IPAddress.Parse("192.168.0.248");
-        //    IPAddress IP = IPAddress.Parse("192.168.10.111");
-        //    int parallelNum = 5000;
-        //    int port = 8888;
-
-        //    AppServer server = new AppServer(port, parallelNum);
-        //    server.Start();
-        //    Console.WriteLine("Server is started...");
-        //    Console.ReadLine();
-        //}
-        //catch (Exception e)
-        //{
-        //    Console.WriteLine(e.Message);
-        //}
-
-        string password = "XfkldptY4327";
-        // Bytes password
-        byte[] bytesPassword = Encoding.UTF8.GetBytes(password);
-        (string pubKey, string priKey) = RsaKeyGenerator.GenerateKeys();
-        // Aes key
-        string aesKey = "I*FA#kgn.24(=13";
-        // 加密公钥
-        string aesEncryptedPubKey = AesEncrypter.Encrypt(pubKey, aesKey);
-        // 解密公钥
-        string aesDecryptedPubkey = AesEncrypter.Decrypt(aesEncryptedPubKey, aesKey);
-        // 设置编码
-        RsaEncryptor.DefaultEncoding = Encoding.UTF8;
-        byte[] encryptedPassword = RsaEncryptor.Encrypt(bytesPassword, aesDecryptedPubkey);
-        Console.WriteLine(encryptedPassword.Length);
-        string decryptedPassword = RsaEncryptor.Decrypt(encryptedPassword, priKey);
-        if (password.Equals(decryptedPassword))
+        try
         {
-            Console.WriteLine("Login successful...");
+            //IPAddress IP = IPAddress.Parse("192.168.0.248");
+            IPAddress IP = IPAddress.Parse("192.168.10.111");
+            int parallelNum = 5000;
+            int port = 8888;
+
+            Service server = new Service(port, parallelNum);
+            server.Start();
+            Console.WriteLine("Server is started...");
+            Console.ReadLine();
         }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+
+        //string password = "XfkldptY4327";
+        //// Bytes password
+        //byte[] bytesPassword = Encoding.UTF8.GetBytes(password);
+        //(string pubKey, string priKey) = RsaKeyGenerator.GenerateKeys();
+        //// Aes key
+        //string aesKey = "I*FA#kgn.24(=13";
+        //// 加密公钥
+        //string aesEncryptedPubKey = AesEncrypter.Encrypt(pubKey, aesKey);
+        //// 解密公钥
+        //string aesDecryptedPubkey = AesEncrypter.Decrypt(aesEncryptedPubKey, aesKey);
+        //// 设置编码
+        //RsaEncryptor.DefaultEncoding = Encoding.UTF8;
+        //byte[] encryptedPassword = RsaEncryptor.Encrypt(bytesPassword, aesDecryptedPubkey);
+        //Console.WriteLine(encryptedPassword.Length);
+        //string decryptedPassword = RsaEncryptor.Decrypt(encryptedPassword, priKey);
+        //if (password.Equals(decryptedPassword))
+        //{
+        //    Console.WriteLine("Login successful...");
     }
 
 }

@@ -17,6 +17,13 @@ namespace Server.SocketCore
         }
         //自定义的一些内容  
         private string id;
+
+        private byte[] _aesKey;
+
+        private string _rsaPrivateKey;
+
+        private string _rsaPublicKey;
+
         public string ID
         {
             get { return id; }
@@ -27,5 +34,16 @@ namespace Server.SocketCore
 
         protected DateTime m_ConnectDateTime;
         public DateTime ConnectDateTime { get { return m_ConnectDateTime; } set { m_ConnectDateTime = value; } }
+
+        public void SetRsaKeys(string publicKey, string privateKey)
+        {
+            _rsaPublicKey = publicKey;
+            _rsaPrivateKey = privateKey;
+        }
+
+        public void SetAesKey(byte[] aesKey)
+        {
+            _aesKey = aesKey;
+        }
     }
 }

@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Server.Log
 {
@@ -12,11 +15,6 @@ namespace Server.Log
     public class Logger
     {
         #region Fields
-        /// <summary>
-        /// 文件锁
-        /// </summary>
-        private static readonly object lockObject = new object();
-
         /// <summary>
         /// 本地工作目录
         /// </summary>
@@ -270,17 +268,15 @@ namespace Server.Log
             (string dayFolderPath, string hourFolderPath) = SetPath();
             CheckFileExists(dayFolderPath, hourFolderPath);
             string filePath = Path.Combine(hourFolderPath, fileName);
-            
+
             using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
             {
-                file.Lock(0, file.Length);
                 using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
                 {
                     string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
-                    writer.WriteLineAsync(dumpMsg);
+                    writer.WriteLine(dumpMsg);
                     DEBUG($"Written to file : {fileName}...");
                 }
-                file.Unlock(0, file.Length);
             }
             return true; // 表示文件写入成功
         }

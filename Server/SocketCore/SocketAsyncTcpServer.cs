@@ -3,6 +3,8 @@ using System.Text;
 using System.Net.Sockets;
 using System.Threading;
 using System.Net;
+using Server.Encryption;
+using Server.Log;
 
 namespace Server.SocketCore
 {
@@ -310,17 +312,20 @@ namespace Server.SocketCore
                         token.Socket = s;
                         token.ID = Guid.NewGuid().ToString();
                         token.ConnectDateTime = DateTime.Now;
+                        (string publicKey, string privateKey) = RsaEncryptor.GenerateKeys();
+                        token.SetRsaKeys(publicKey, privateKey);
 
                         SocketUserTokenList.Add(asyniar);   //Add event to token list
 
                         // If conncet successful. Send GUID and RSA Keys
+                        //s.Send(Encoding.UTF8.GetBytes(token.ID));
                         s.Send(Encoding.UTF8.GetBytes(token.ID));
-
                         lg.FINFO($"Client {s.RemoteEndPoint} connected, Have {_clientCount} clients.");
 
                         if (!s.ReceiveAsync(asyniar))       // ProcessReceive
                         {
                             ProcessReceive(asyniar);
+                            //ProcessReceive(asyniar);
                         }
                     }
                     catch (SocketException ex)
@@ -460,12 +465,25 @@ namespace Server.SocketCore
                     //判断所有需接收的数据是否已经完成  
                     if (s.Available == 0)
                     {
-                        byte[] bytesData = new byte[e.BytesTransferred];
-                        Array.Copy(e.Buffer, e.Offset, bytesData, 0, bytesData.Length);//从e.Buffer块中复制数据出来，保证它可重用  
-
-                        string data = Encoding.UTF8.GetString(bytesData);
-                        lg.DEBUG($"收到 {s.RemoteEndPoint} 数据为 {data}");
-                        ActionHandler(data);
+                        byte[] data = new byte[e.BytesTransferred];
+                        lg.DEBUG($"Data length:{data.Length}");
+                        Array.Copy(e.Buffer, e.Offset, data, 0, data.Length);
+                        int intLength = sizeof(int);
+                        int offset = 0;
+                        while (offset < e.BytesTransferred)
+                        {
+                            byte[] dataLengthByte = new byte[intLength];
+                            Array.Copy(data, offset, dataLengthByte, 0, intLength);
+                            int dataLength = BitConverter.ToInt32(dataLengthByte);
+                            lg.DEBUG($"Ont clock data length:{dataLength}");
+                            offset += intLength;
+                            lg.DEBUG($"Offset index:{offset}");
+                            byte[] bytesData = new byte[dataLength];
+                            Array.Copy(data, offset, bytesData, 0, dataLength);
+                            lg.DEBUG($"收到 {s.RemoteEndPoint} 数据为 {Encoding.UTF8.GetString(bytesData)}");
+                            offset += dataLength;
+                        }
+                        //HandleMessage(data);
                     }
                     if (!s.ReceiveAsync(e))//为接收下一段数据，投递接收请求，这个函数有可能同步完成，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件  
                     {
@@ -612,6 +630,6 @@ namespace Server.SocketCore
         }
         #endregion
 
-        protected abstract void ActionHandler(string data);
+        protected abstract void HandleMessage(string data);
     }
 }

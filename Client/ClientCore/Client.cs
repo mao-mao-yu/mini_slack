@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 using Client.Encryption;
 using Client.FileHandler;
-using Client.Commons;
+using Client.Common;
 
 
 namespace Client.ClientCore
@@ -23,7 +23,7 @@ namespace Client.ClientCore
         private Dictionary<string, object> jsonData = new Dictionary<string, object>() { };
 
         public Client(string ip, int port)
-        {
+        { 
         }
 
         //public async Task<bool> Register(string username, string password)
