@@ -5,6 +5,8 @@ using System.Threading;
 using System.Net;
 using Server.Encryption;
 using Server.Log;
+using Server.Common;
+using Server.Error;
 
 namespace Server.SocketCore
 {
@@ -28,6 +30,11 @@ namespace Server.SocketCore
         /// Listener Socket
         /// </summary>
         private Socket _socketServer;
+
+        /// <summary>
+        /// RingBuffer
+        /// </summary>
+        private RingBuffer ringBuffer = new RingBuffer();
 
         /// <summary>
         /// The num of online client
@@ -450,46 +457,67 @@ namespace Server.SocketCore
         /// <param name="e">与接收完成操作相关联的SocketAsyncEventArg对象</param>  
         private void ProcessReceive(SocketAsyncEventArgs e)
         {
-            if (e.SocketError == SocketError.Success)//if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success) 
+            if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
             {
-                // 检查远程主机是否关闭连接  
-                if (e.BytesTransferred > 0)
+                AsyncUserToken token = (AsyncUserToken)e.UserToken;
+                token.ActiveDateTime = DateTime.Now;
+                Socket socket = token.Socket;
+
+                if (socket == null || !socket.Connected)
                 {
-                    AsyncUserToken token = (AsyncUserToken)e.UserToken;
-                    token.ActiveDateTime = DateTime.Now;
-                    Socket s = token.Socket;
-                    if (s == null || !s.Connected)
+                    return;
+                }
+
+                // Copy the received data to the ring buffer
+                byte[] data = new byte[e.BytesTransferred];
+                Array.Copy(e.Buffer, e.Offset, data, 0, e.BytesTransferred);
+
+                // 如果环形数组为空或者有空间则写入数据
+                if (ringBuffer.IsEmpty || ringBuffer.HavingSpace(e.BytesTransferred))
+                {
+                    ringBuffer.Write(data);
+                    lg.DEBUG($"479行 Written {data.Length} to ring buffer...");
+                }
+
+                try
+                {
+                    bool partialMessage = false;
+
+                    // Process all available messages in the ring buffer
+                    do
                     {
-                        return;
-                    }
-                    //判断所有需接收的数据是否已经完成  
-                    if (s.Available == 0)
-                    {
-                        byte[] data = new byte[e.BytesTransferred];
-                        lg.DEBUG($"Data length:{data.Length}");
-                        Array.Copy(e.Buffer, e.Offset, data, 0, data.Length);
-                        int intLength = sizeof(int);
-                        int offset = 0;
-                        while (offset < e.BytesTransferred)
+                        int dataLength = BitConverter.ToInt32(ringBuffer.Read(4));
+                        lg.DEBUG($"490 {dataLength}");
+                        if (ringBuffer.HavingData(dataLength))
                         {
-                            byte[] dataLengthByte = new byte[intLength];
-                            Array.Copy(data, offset, dataLengthByte, 0, intLength);
-                            int dataLength = BitConverter.ToInt32(dataLengthByte);
-                            lg.DEBUG($"Ont clock data length:{dataLength}");
-                            offset += intLength;
-                            lg.DEBUG($"Offset index:{offset}");
-                            byte[] bytesData = new byte[dataLength];
-                            Array.Copy(data, offset, bytesData, 0, dataLength);
-                            lg.DEBUG($"收到 {s.RemoteEndPoint} 数据为 {Encoding.UTF8.GetString(bytesData)}");
-                            offset += dataLength;
+                            lg.DEBUG("Having data");
+                            byte[] oneBlockData = ringBuffer.Read(dataLength);
+                            lg.DEBUG($"收到 {socket.RemoteEndPoint} 数据为 {Encoding.UTF8.GetString(oneBlockData)}");
                         }
-                        //HandleMessage(data);
-                    }
-                    if (!s.ReceiveAsync(e))//为接收下一段数据，投递接收请求，这个函数有可能同步完成，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件  
-                    {
-                        //同步接收时处理接收完成事件  
-                        ProcessReceive(e);
-                    }
+                        else
+                        {
+                            lg.DEBUG("No data");
+                            // 部分消息，等待更多数据
+                            partialMessage = true;
+                            break;
+                        }
+                    } while (!partialMessage);
+                }
+                catch (BytesDataHeaderError ex)
+                {
+                    lg.IMPORTTANT(ex, "受到错误格式的TCP数据");
+                    ringBuffer.Clear();
+                }
+                catch (Exception ex)
+                {
+                    lg.IMPORTTANT(ex, "未知错误");
+                }
+
+                // Asynchronously receive more data from the socket
+                if (!socket.ReceiveAsync(e))
+                {
+                    // If ReceiveAsync completed synchronously, call ProcessReceive again to process the received data
+                    ProcessReceive(e);
                 }
             }
             else

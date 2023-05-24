@@ -21,6 +21,11 @@ namespace Server.Log
         private static string _currentPath;
 
         /// <summary>
+        /// Lock
+        /// </summary>
+        private static object _lockObj = new object();
+
+        /// <summary>
         /// log文件夹输出目录
         /// </summary>
         private readonly string _logFolderPath;
@@ -269,15 +274,19 @@ namespace Server.Log
             CheckFileExists(dayFolderPath, hourFolderPath);
             string filePath = Path.Combine(hourFolderPath, fileName);
 
-            using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
+            lock (_lockObj)
             {
-                using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
+                using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
                 {
-                    string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
-                    writer.WriteLine(dumpMsg);
-                    DEBUG($"Written to file : {fileName}...");
+                    using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
+                    {
+                        string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
+                        writer.WriteLineAsync(dumpMsg);
+                        DEBUG($"Written to file : {fileName}...");
+                    }
                 }
             }
+
             return true; // 表示文件写入成功
         }
 

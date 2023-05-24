@@ -11,7 +11,7 @@ using System.Text;
 
 class Program
 {
-    //static public int messageNum;
+    static public int messageNum;
     static public IPAddress ip;
     static Dictionary<string, string> test = new Dictionary<string, string>()
     {
@@ -20,10 +20,10 @@ class Program
         {"password", "gasgsaaagasgasg" }
     };
 
-    //static string FormatTimeSpan(TimeSpan timeSpan)
-    //{
-    //    return $"{timeSpan.Hours:D2}H{timeSpan.Minutes:D2}M{timeSpan.Seconds:D2}S";
-    //}
+    static string FormatTimeSpan(TimeSpan timeSpan)
+    {
+        return $"{timeSpan.Hours:D2}H{timeSpan.Minutes:D2}M{timeSpan.Seconds:D2}S";
+    }
 
     static void Main(string[] args)
     {
@@ -37,30 +37,32 @@ class Program
         //Console.WriteLine(Convert.ToBase64String(encryptedPassword));
         //byte[] decryptedPassword = AesEncryptor.Decrypt(encryptedPassword, key, iv);
         //Console.WriteLine(Encoding.UTF8.GetString(decryptedPassword));
-        //List<Thread> threads = new List<Thread>();
-        //int threadNum = 1;
-        //messageNum = 50;
-        ip = IPAddress.Parse("192.168.10.111");
-        createConnect(test);
-        Console.ReadKey();
-        //DateTime startTime = DateTime.Now;
-        //for (int i = 0; i < threadNum; i++)
-        //{
-        //    Thread thread = new Thread(new ParameterizedThreadStart(createConnect));
-        //    threads.Add(thread);
-        //    thread.Start(test);
-        //}
-        //foreach(Thread thread in threads)
-        //{
-        //    thread.Join();
-        //}
-        //DateTime endTime = DateTime.Now;
-        //TimeSpan duration = endTime - startTime;
+        List<Thread> threads = new List<Thread>();
+        int threadNum = 1;
+        messageNum = 20;
+        //ip = IPAddress.Parse("192.168.10.111");
+        ip = IPAddress.Parse("127.0.0.1");
+        //createConnect(test);
+        //Console.ReadKey();
 
-        //string formattedDuration = FormatTimeSpan(duration);
-        //Console.WriteLine($"{threadNum}个客户端全部发送完毕.耗时{formattedDuration}");
-        //Console.WriteLine("按任意键退出...");
-        //Console.ReadKey(); // 防止主线程退出
+        DateTime startTime = DateTime.Now;
+        for (int i = 0; i < threadNum; i++)
+        {
+            Thread thread = new Thread(new ParameterizedThreadStart(createConnect));
+            threads.Add(thread);
+            thread.Start(test);
+        }
+        foreach (Thread thread in threads)
+        {
+            thread.Join();
+        }
+        DateTime endTime = DateTime.Now;
+        TimeSpan duration = endTime - startTime;
+
+        string formattedDuration = FormatTimeSpan(duration);
+        Console.WriteLine($"{threadNum}个客户端全部发送完毕.耗时{formattedDuration}");
+        Console.WriteLine("按任意键退出...");
+        Console.ReadKey(); // 防止主线程退出
     }
 
     public static void createConnect(object testData)
@@ -101,7 +103,7 @@ class Program
         Array.Copy(dataLength, 0, allData, 0, dataLength.Length);
         Array.Copy(jsonBytes, 0, allData, dataLength.Length, jsonBytes.Length);
         int totalBytes = 0;
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < messageNum; i++)
         {
             totalBytes += clientSocket.Send(allData);
         }

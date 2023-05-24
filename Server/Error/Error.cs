@@ -4,7 +4,10 @@ using System.Text;
 
 namespace Server.Error
 {
-    class Error
+    class BytesDataHeaderError:Exception
     {
+        public BytesDataHeaderError(string msg):base(msg)
+        {
+        }
     }
 }
