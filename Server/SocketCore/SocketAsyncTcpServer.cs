@@ -471,37 +471,36 @@ namespace Server.SocketCore
                 // Copy the received data to the ring buffer
                 byte[] data = new byte[e.BytesTransferred];
                 Array.Copy(e.Buffer, e.Offset, data, 0, e.BytesTransferred);
-
+                int count = 0;
                 // 如果环形数组为空或者有空间则写入数据
                 if (ringBuffer.IsEmpty || ringBuffer.HavingSpace(e.BytesTransferred))
                 {
+                    lg.INFO($"479行 Written {data.Length} to ring buffer...");
                     ringBuffer.Write(data);
-                    lg.DEBUG($"479行 Written {data.Length} to ring buffer...");
+                    count += data.Length;
                 }
-
+                lg.DEBUG($"共写入{count}字节数据到ring buffer...");
                 try
                 {
-                    bool partialMessage = false;
-
-                    // Process all available messages in the ring buffer
-                    do
+                    while (true)
                     {
-                        int dataLength = BitConverter.ToInt32(ringBuffer.Read(4));
-                        lg.DEBUG($"490 {dataLength}");
-                        if (ringBuffer.HavingData(dataLength))
+                        if (!ringBuffer.HavingData(sizeof(int)))
                         {
-                            lg.DEBUG("Having data");
-                            byte[] oneBlockData = ringBuffer.Read(dataLength);
-                            lg.DEBUG($"收到 {socket.RemoteEndPoint} 数据为 {Encoding.UTF8.GetString(oneBlockData)}");
+                            lg.DEBUG($"没有int32数据");
+                            break;
+                        }
+                        int dataLength = ringBuffer.ReadHeader();
+                        if (!ringBuffer.HavingData(dataLength))
+                        {
+                            lg.DEBUG($"没有{dataLength}长的数据");
+                            break;
                         }
                         else
                         {
-                            lg.DEBUG("No data");
-                            // 部分消息，等待更多数据
-                            partialMessage = true;
-                            break;
+                            byte[] bytesData = ringBuffer.Read(dataLength);
+                            lg.INFO($"收到消息{Encoding.UTF8.GetString(bytesData)}");
                         }
-                    } while (!partialMessage);
+                    }
                 }
                 catch (BytesDataHeaderError ex)
                 {

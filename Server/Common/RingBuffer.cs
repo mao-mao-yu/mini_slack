@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Server.Error;
+using Server.Log;
 
 namespace Server.Common
 {
@@ -11,6 +12,8 @@ namespace Server.Common
         public int ReadIndex { get; private set; }
         public int WriteIndex { get; private set; }
         public int Size { get; private set; }
+
+        private Logger lg = new Logger();
 
         /// <summary>
         /// RingBuffer
@@ -47,7 +50,7 @@ namespace Server.Common
             }
 
             byte[] result = new byte[length];
-
+            lg.DEBUG($"Read现在的ReadIndex = {ReadIndex}, WriteIndex = {WriteIndex}");
             int space = Size - ReadIndex;
             if (length <= space)
             {
@@ -60,7 +63,7 @@ namespace Server.Common
                 Buffer.BlockCopy(buffer, 0, result, space, length - space);
                 ReadIndex = length - space;
             }
-
+            lg.DEBUG($"Read读完的ReadIndex = {ReadIndex}, WriteIndex = {WriteIndex}");
             return result;
         }
 
@@ -70,7 +73,7 @@ namespace Server.Common
             {
                 throw new ArgumentException("Length is larger than buffer size");
             }
-
+            lg.DEBUG($"Write现在的ReadIndex = {ReadIndex}, WriteIndex = {WriteIndex}");
             int space = Size - WriteIndex;
             if (data.Length <= space)
             {
@@ -83,6 +86,7 @@ namespace Server.Common
                 Array.Copy(data, space, buffer, 0, data.Length - space);
                 WriteIndex = data.Length - space;
             }
+            lg.DEBUG($"Write写完的ReadIndex = {ReadIndex}, WriteIndex = {WriteIndex}");
         }
 
         public int ReadHeader()
@@ -123,7 +127,7 @@ namespace Server.Common
         /// <returns></returns>
         public bool HavingSpace(int dataLength)
         {
-            int freeSpace = ReadIndex - WriteIndex - 1;
+            int freeSpace = ReadIndex - WriteIndex;
             if (freeSpace < 0)
             {
                 freeSpace += Size;

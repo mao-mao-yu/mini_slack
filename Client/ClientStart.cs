@@ -39,7 +39,7 @@ class Program
         //Console.WriteLine(Encoding.UTF8.GetString(decryptedPassword));
         List<Thread> threads = new List<Thread>();
         int threadNum = 1;
-        messageNum = 20;
+        messageNum = 100;
         //ip = IPAddress.Parse("192.168.10.111");
         ip = IPAddress.Parse("127.0.0.1");
         //createConnect(test);
@@ -106,6 +106,7 @@ class Program
         for (int i = 0; i < messageNum; i++)
         {
             totalBytes += clientSocket.Send(allData);
+            Console.WriteLine($"现在发送了{totalBytes}字节");
         }
         Console.WriteLine(totalBytes);
         //    for (int i = 0; i < messageNum; i++)
