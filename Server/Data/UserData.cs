@@ -36,8 +36,7 @@ namespace Server.Data
                 }
                 catch (Exception e)
                 {
-                    lg.WARNING("Convert str to json error " + e.Message);
-                    lg.IMPORTTANT(e, "Convert str to json error ");
+                    lg.FWARNING(e, "Convert str to json error ");
                 }
             }
         }

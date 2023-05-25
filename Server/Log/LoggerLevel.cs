@@ -7,7 +7,7 @@ namespace Server.Log
     /// </summary>
     public enum LogLevel
     {
-        EVERYTHING,
+        ALL,
 
         DEBUG,
 
@@ -17,5 +17,6 @@ namespace Server.Log
 
         ERROR,
 
+        OFF,
     }
 }

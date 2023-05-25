@@ -4,9 +4,9 @@ using System.Text;
 using Server.Error;
 using Server.Log;
 
-namespace Server.Common
+namespace Server.SocketAsyncCore
 {
-    public class RingBuffer
+    public class SocketAsyncRingBuffer
     {
 
         public int ReadIndex { get; private set; }
@@ -28,7 +28,7 @@ namespace Server.Common
         /// ctor
         /// </summary>
         /// <param name="size">Buffer size</param>
-        public RingBuffer(int size)
+        public SocketAsyncRingBuffer(int size)
         {
             buffer = new byte[size];
             Size = size;
@@ -87,11 +87,6 @@ namespace Server.Common
                 WriteIndex = data.Length - space;
             }
             lg.DEBUG($"Write method end WriteIndex is {WriteIndex}");
-        }
-
-        private byte NoMoveRead(int index)
-        {
-            return buffer[index];
         }
 
         public int ReadHeader()

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using Server.SocketCore;
+using Server.SocketAsyncCore;
 using Server.Data;
 using Server.Encryption;
 using Server.Interface;

@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using Server.Common;
 
-namespace Server.SocketCore
+namespace Server.SocketAsyncCore
 {
     //这个类是将UserToken进行了再次封装，MSDN对于异步Socket的介绍中总会提到：  
     //若在异步回调中需要查询更多的信息，则应该建立一个小型类来管理回调时传递的Object对象  
@@ -25,7 +25,7 @@ namespace Server.SocketCore
 
         public byte[] AesIV { get; set; }
 
-        public RingBuffer Rb { get; private set; }
+        public SocketAsyncRingBuffer Rb { get; private set; }
 
         public string GUID { get; set; }
 
@@ -37,7 +37,7 @@ namespace Server.SocketCore
         public DateTime ConnectDateTime { get { return m_ConnectDateTime; } set { m_ConnectDateTime = value; } }
         public void SetRingBuffer(int size = 2048)
         {
-            Rb = new RingBuffer(size);
+            Rb = new SocketAsyncRingBuffer(size);
         }
     }
 }

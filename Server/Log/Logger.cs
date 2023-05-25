@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Threading;
+using Server.Common;
 
 namespace Server.Log
 {
@@ -23,7 +24,7 @@ namespace Server.Log
         /// <summary>
         /// Lock
         /// </summary>
-        private static object _lockObj = new object();
+        private static readonly object _lockObj = new object();
 
         /// <summary>
         /// log文件夹输出目录
@@ -36,36 +37,24 @@ namespace Server.Log
         private DateTime _dateTime;
 
         /// <summary>
-        /// 配置文件路径
-        /// </summary>
-        private readonly string _configPath;
-
-        /// <summary>
         /// 配置文件字典
         /// </summary>
-        private readonly Dictionary<string, int> _configDict;
-
-        /// <summary>
-        /// 配置文件控制台输出等级
-        /// </summary>
-        private readonly int _configLogLevel;
-
-        /// <summary>
-        /// 配置文件输出text等级
-        /// </summary>
-        private readonly int _configOperateLevel;
+        private LoggerSetting setting;
 
         /// <summary>
         /// 是否写入文件
         /// </summary>
-        private readonly bool _configAllWrite;
-        #endregion
+        private bool _isWriteToFile;
 
-        #region Property
         /// <summary>
-        /// AllWrite属性 是否写入文件
+        /// 控制台输出等级
         /// </summary>
-        public bool AllWrite => _configAllWrite;
+        private readonly LogLevel _consoleWriteLevel;
+
+        /// <summary>
+        /// 文件输出等级
+        /// </summary>
+        private readonly LogLevel _fileWriteLevel;
         #endregion
 
         #region Ctor
@@ -76,70 +65,11 @@ namespace Server.Log
             // Log输出路径
             _logFolderPath = Path.Combine(_currentPath, "Log");
             // 配置文件路径
-            _configPath = Path.Combine(_currentPath, "LogConfig.json");
-            _configDict = GetConfigDictionary();
-            _configLogLevel = GetConfigLogLevel();
-            _configOperateLevel = GetConfigOperateLevel();
-            _configAllWrite = GetConfigAllWrite();
-
-        }
-        #endregion
-
-        #region Get config
-        /// <summary>
-        /// 获取配置文件并转为字典
-        /// </summary>
-        /// <returns></returns>
-        private Dictionary<string, int> GetConfigDictionary()
-        {
-            string configJson = File.ReadAllText(_configPath, Encoding.UTF8);
-            return JsonConvert.DeserializeObject<Dictionary<string, int>>(configJson);
-        }
-
-        /// <summary>
-        /// 获取日志输出等级
-        /// </summary>
-        /// <returns></returns>
-        private int GetConfigLogLevel()
-        {
-            if (_configDict.ContainsKey("LogLevel"))
-            {
-                return _configDict["LogLevel"];
-            }
-            return 1;
-        }
-
-        /// <summary>
-        /// 获取日志输出文件等级
-        /// </summary>
-        /// <returns></returns>
-        private int GetConfigOperateLevel()
-        {
-            if (_configDict.ContainsKey("OperateLevel"))
-            {
-                return _configDict["OperateLevel"];
-            }
-            return 1;
-        }
-
-        /// <summary>
-        /// 获取是否写入文件bool
-        /// </summary>
-        /// <returns></returns>
-        private bool GetConfigAllWrite()
-        {
-            if (_configDict.ContainsKey("UseFileWriter"))
-            {
-                if (_configDict["UseFileWriter"] == 0)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            return true;
+            string settingPath = Path.Combine(_currentPath, "Config","LoggerSetting.json");
+            setting = SettingBase.LoadSetting<LoggerSetting>(settingPath);
+            _consoleWriteLevel = setting.ConsoleWriteLevel;
+            _fileWriteLevel = setting.FileWriteLevel;
+            _isWriteToFile = setting.IsWriteToFile;
         }
         #endregion
 
@@ -151,11 +81,20 @@ namespace Server.Log
         /// <param name="logLevel"></param>
         public void WriteMessage(string message, LogLevel logLevel)
         {
-            if ((int)logLevel < _configLogLevel)
+            if ((int)_consoleWriteLevel == (int)LogLevel.OFF)
+            {
+                return;
+            }
+            if ((int)logLevel < (int)_consoleWriteLevel)
             {
                 return;
             }
             Console.WriteLine($"[{GetDayStr()}] [{logLevel}] : {message}");
+        }
+
+        public void ALL(string msg)
+        {
+            WriteMessage(msg, LogLevel.ALL);
         }
 
         public void DEBUG(string msg)
@@ -180,6 +119,10 @@ namespace Server.Log
         #endregion
 
         #region Write to file
+        public void FALL(string msg)
+        {
+            WriteFileMessage(msg, LogLevel.ALL);
+        }
 
         public void FDEBUG(string msg)
         {
@@ -203,11 +146,15 @@ namespace Server.Log
 
         public void WriteFileMessage(string message, LogLevel logLevel)
         {
-            if ((int)logLevel < _configLogLevel)
+            if ((int)_fileWriteLevel == (int)LogLevel.OFF)
             {
                 return;
             }
-            if (_configAllWrite)
+            if ((int)logLevel < (int)_fileWriteLevel)
+            {
+                return;
+            }
+            if (_isWriteToFile)
             {
                 FileWriter(message, logLevel);
             }
@@ -215,31 +162,44 @@ namespace Server.Log
         #endregion
 
         #region Exception To File
-        public void INSIGNIFICANT(Exception e, string msg)
+        public void FALL(Exception e, string msg)
         {
-            WriteError(e, msg, OperateLevel.INSIGNIFICANT);
+            WriteError(e, msg, LogLevel.ALL);
         }
 
-        public void SMALLEFFECT(Exception e, string msg)
+        public void FDEBUG(Exception e, string msg)
         {
-            WriteError(e, msg, OperateLevel.SMALLEFFECT);
+            WriteError(e, msg, LogLevel.DEBUG);
         }
 
-        public void NORMAL(Exception e, string msg)
+        public void FINFO(Exception e, string msg)
         {
-            WriteError(e, msg, OperateLevel.NORMAL);
+            WriteError(e, msg, LogLevel.INFO);
         }
 
-        public void IMPORTTANT(Exception e, string msg)
+        public void FWARNING(Exception e, string msg)
         {
-            WriteError(e, msg, OperateLevel.IMPORTTANT);
+            WriteError(e, msg, LogLevel.WARNING);
         }
 
-        public void WriteError(Exception ex, string msg, OperateLevel operateLevel)
+        public void FERROR(Exception e, string msg)
         {
-            if (_configAllWrite)
+            WriteError(e, msg, LogLevel.ERROR);
+        }
+
+        public void WriteError(Exception ex, string msg, LogLevel logLevel)
+        {
+            if ((int)_fileWriteLevel == (int)LogLevel.OFF)
             {
-                FileWriter($"{msg} message : {ex.Message}. StackTrace : {ex.StackTrace}", operateLevel);
+                return;
+            }
+            if((int)logLevel < (int)_fileWriteLevel)
+            {
+                return;
+            }
+            if (_isWriteToFile)
+            {
+                FileWriter($"Message : {msg}\nException message : {ex.Message}\nStackTrace : {ex.StackTrace}", logLevel);
             }
         }
         #endregion

@@ -3,14 +3,14 @@ using System.Threading;
 using System.Net.Sockets;
 
 
-namespace Server.SocketCore
+namespace Server.SocketAsyncCore
 {
-    class DaemonThread : Object
+    class SocketAsyncDaemonThread : object
     {
         private Thread m_thread;
         private SocketAsyncTcpServer m_asyncSocketServer;
 
-        public DaemonThread(SocketAsyncTcpServer asyncSocketServer)
+        public SocketAsyncDaemonThread(SocketAsyncTcpServer asyncSocketServer)
         {
             m_asyncSocketServer = asyncSocketServer;
             m_thread = new Thread(DaemonThreadStart);

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Server.SocketCore
+namespace Server.SocketAsyncCore
 {
-    public class BufferManager
+    public class SocketAsyncBufferManager
     {
         int m_numBytes;                 //buffer大小  
         byte[] m_buffer;
@@ -13,7 +13,7 @@ namespace Server.SocketCore
         int m_currentIndex;
         int m_bufferSize;
 
-        public BufferManager(int totalBytes, int bufferSize)
+        public SocketAsyncBufferManager(int totalBytes, int bufferSize)
         {
             m_numBytes = totalBytes;
             m_currentIndex = 0;

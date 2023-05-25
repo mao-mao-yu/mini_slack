@@ -8,7 +8,7 @@ using Server.Log;
 using Server.Common;
 using Server.Error;
 
-namespace Server.SocketCore
+namespace Server.SocketAsyncCore
 {
     public abstract class SocketAsyncTcpServer : IDisposable
     {
@@ -49,7 +49,7 @@ namespace Server.SocketCore
         /// <summary>
         /// Dead thread
         /// </summary>
-        private DaemonThread m_daemonThread;
+        private SocketAsyncDaemonThread m_daemonThread;
 
         /// <summary>
         /// Aes key size
@@ -64,7 +64,7 @@ namespace Server.SocketCore
         /// <summary>
         /// Buffer manager
         /// </summary>
-        BufferManager _bufferManager;
+        SocketAsyncBufferManager _bufferManager;
 
         /// <summary>
         /// Object pool
@@ -154,7 +154,7 @@ namespace Server.SocketCore
 
             _socketServer = new Socket(localIPAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-            _bufferManager = new BufferManager(_bufferSize * (_maxClient + 1) * opsToPreAlloc, _bufferSize);
+            _bufferManager = new SocketAsyncBufferManager(_bufferSize * (_maxClient + 1) * opsToPreAlloc, _bufferSize);
 
             _objectPool = new SocketAsyncEventArgsPool(_maxClient);
 
@@ -249,7 +249,7 @@ namespace Server.SocketCore
                 StartAccept(null);
 
                 // Check daemon thread.
-                m_daemonThread = new DaemonThread(this);
+                m_daemonThread = new SocketAsyncDaemonThread(this);
                 //m_daemonThread.DaemonThreadStart();
             }
         }
@@ -298,7 +298,7 @@ namespace Server.SocketCore
             catch (Exception E)
             {
                 string msg = $"Accept client {e.AcceptSocket} error, message: {E.Message}";
-                lg.IMPORTTANT(E, msg);
+                lg.FERROR(E, msg);
             }
         }
 
@@ -337,7 +337,7 @@ namespace Server.SocketCore
                     }
                     catch (SocketException ex)
                     {
-                        lg.IMPORTTANT(ex, $"Receive user {s.RemoteEndPoint} error, message: {ex.Message}");
+                        lg.FERROR(ex, $"Receive user {s.RemoteEndPoint} error, message: {ex.Message}");
                     }
                     //投递下一个接受请求  
                     StartAccept(e);
@@ -491,7 +491,7 @@ namespace Server.SocketCore
                 AsyncUserToken token = (AsyncUserToken)e.UserToken;
                 token.ActiveDateTime = DateTime.Now;
                 Socket socket = token.Socket;
-                RingBuffer ringBuffer = token.Rb;
+                SocketAsyncRingBuffer ringBuffer = token.Rb;
                 if (socket == null || !socket.Connected)
                 {
                     return;
@@ -500,7 +500,7 @@ namespace Server.SocketCore
                 // Copy the received data to the ring buffer
                 byte[] data = new byte[e.BytesTransferred];
                 Array.Copy(e.Buffer, e.Offset, data, 0, e.BytesTransferred);
-                
+
                 // 如果环形数组为空或者有空间则写入数据
                 if (ringBuffer.IsEmpty || ringBuffer.HavingSpace(e.BytesTransferred))
                 {
@@ -536,12 +536,12 @@ namespace Server.SocketCore
                 }
                 catch (BytesDataHeaderError ex)
                 {
-                    lg.IMPORTTANT(ex, "Received error data");
+                    lg.FERROR(ex, "Received error data");
                     ringBuffer.Clear();
                 }
                 catch (Exception ex)
                 {
-                    lg.IMPORTTANT(ex, "Unknown error");
+                    lg.FERROR(ex, "Unknown error");
                 }
 
                 // Asynchronously receive more data from the socket
@@ -592,7 +592,7 @@ namespace Server.SocketCore
             catch (Exception E)
             {
                 string msg = $"IO_Completed {userToken.Socket} error, message: {E.Message}";
-                lg.IMPORTTANT(E, msg);
+                lg.FERROR(E, msg);
             }
         }
         #endregion
