@@ -22,19 +22,19 @@ namespace Server.SocketCore
         private int _maxClient;
 
         /// <summary>
+        /// Int size
+        /// </summary>
+        private const int INT_SIZE = sizeof(int);
+
+        /// <summary>
         /// Logger
         /// </summary>
-        protected Logger lg;
+        protected Logger lg = new Logger();
 
         /// <summary>
         /// Listener Socket
         /// </summary>
         private Socket _socketServer;
-
-        /// <summary>
-        /// RingBuffer
-        /// </summary>
-        private RingBuffer ringBuffer = new RingBuffer();
 
         /// <summary>
         /// The num of online client
@@ -50,6 +50,11 @@ namespace Server.SocketCore
         /// Dead thread
         /// </summary>
         private DaemonThread m_daemonThread;
+
+        /// <summary>
+        /// Aes key size
+        /// </summary>
+        private int _aesKeySize = 256;
 
         /// <summary>
         /// 信号
@@ -161,7 +166,6 @@ namespace Server.SocketCore
         #endregion
 
         #region Init
-
         /// <summary>  
         /// 初始化函数  
         /// </summary>  
@@ -170,7 +174,7 @@ namespace Server.SocketCore
             // Allocates one large byte buffer which all I/O operations use a piece of.  This gaurds   
             // against memory fragmentation  
             _bufferManager.InitBuffer();
-            lg = new Logger();
+
             // preallocate pool of SocketAsyncEventArgs objects  
             SocketAsyncEventArgs readWriteEventArg;
 
@@ -190,6 +194,25 @@ namespace Server.SocketCore
 
         }
 
+        private AsyncUserToken InitUserToken(SocketAsyncEventArgs asyniar, Socket s)
+        {
+            AsyncUserToken token = (AsyncUserToken)asyniar.UserToken;
+            // Socket
+            token.Socket = s;
+            // GUID
+            token.GUID = Guid.NewGuid().ToString();
+            // Connect time
+            token.ConnectDateTime = DateTime.Now;
+            // Set ring buffer
+            token.SetRingBuffer(_bufferSize * 2);
+            // Generate random rsa key
+            (token.RsaPublicKey, token.RsaPrivateKey) = RsaEncryptor.GenerateKeys();
+            // Generate random aes key
+            token.AesKey = AesEncrypter.GenerateRandomKey(_aesKeySize);
+            token.AesIV = AesEncrypter.GenerateRandomIV();
+
+            return token;
+        }
         #endregion
 
         #region Start
@@ -230,24 +253,6 @@ namespace Server.SocketCore
                 //m_daemonThread.DaemonThreadStart();
             }
         }
-        #endregion
-
-        #region Stop
-
-        /// <summary>  
-        /// Stop server  
-        /// </summary>  
-        public void Stop()
-        {
-            if (IsRunning)
-            {
-                IsRunning = false;
-                _socketServer.Close();
-                //Close all socket 
-                SocketUserTokenList.CloseAll();
-            }
-        }
-
         #endregion
 
         #region Accept
@@ -310,23 +315,18 @@ namespace Server.SocketCore
                 {
                     try
                     {
-
                         Interlocked.Increment(ref _clientCount);        //原子操作加1  
                         SocketAsyncEventArgs asyniar = _objectPool.Pop();
-                        AsyncUserToken token = (AsyncUserToken)asyniar.UserToken;
-
                         //用户的token操作
-                        token.Socket = s;
-                        token.ID = Guid.NewGuid().ToString();
-                        token.ConnectDateTime = DateTime.Now;
-                        (string publicKey, string privateKey) = RsaEncryptor.GenerateKeys();
-                        token.SetRsaKeys(publicKey, privateKey);
-
+                        AsyncUserToken token = InitUserToken(asyniar, s);
                         SocketUserTokenList.Add(asyniar);   //Add event to token list
 
                         // If conncet successful. Send GUID and RSA Keys
                         //s.Send(Encoding.UTF8.GetBytes(token.ID));
-                        s.Send(Encoding.UTF8.GetBytes(token.ID));
+
+                        Send(s, Encoding.UTF8.GetBytes(token.GUID));
+                        //Send(e, Encoding.UTF8.GetBytes(token.GUID));
+                        //s.Send(Encoding.UTF8.GetBytes(token.GUID));
                         lg.FINFO($"Client {s.RemoteEndPoint} connected, Have {_clientCount} clients.");
 
                         if (!s.ReceiveAsync(asyniar))       // ProcessReceive
@@ -355,7 +355,6 @@ namespace Server.SocketCore
         #endregion
 
         #region Send message
-
         /// <summary>  
         /// Async send data 
         /// </summary>  
@@ -365,27 +364,45 @@ namespace Server.SocketCore
         {
             if (e.SocketError == SocketError.Success)
             {
-                Socket s = e.AcceptSocket;                              // Connecting to client's socket
+                Socket s = e.AcceptSocket; // Connecting to client's socket
                 if (s.Connected)
                 {
-                    Array.Copy(data, 0, e.Buffer, 0, data.Length);      // Set the data to be sent 
+                    // create new byte array including length header
+                    byte[] dataWithLengthHeader = new byte[INT_SIZE + data.Length];
 
-                    //e.SetBuffer(data, 0, data.Length);                // Set the data to be sent
-                    //
+                    // convert length to bytes
+                    byte[] lengthHeader = BitConverter.GetBytes(data.Length);
+                    lengthHeader.CopyTo(dataWithLengthHeader, 0);
+
+                    // copy data into new array
+                    data.CopyTo(dataWithLengthHeader, INT_SIZE);
+
+                    Array.Copy(dataWithLengthHeader, 0, e.Buffer, 0, dataWithLengthHeader.Length);
+
                     // Submit the send request, this function may send it synchronously,
-                    // In which case it returns false and does not trigger the SocketAsyncEventArgs.Completed event.
                     if (!s.SendAsync(e))
                     {
                         // When sending synchronously, handle the send completion event.
-                        lg.DEBUG("Sended " + data.Length);
+                        lg.DEBUG("Sended " + dataWithLengthHeader.Length);
                         ProcessSend(e);
-                    }
-                    else
-                    {
-                        //CloseClientSocket(e);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Local send
+        /// </summary>
+        /// <param name="socket"></param>
+        /// <param name="data"></param>
+        private int Send(Socket socket, byte[] data)
+        {
+            byte[] header = BitConverter.GetBytes(data.Length);
+            byte[] packet = new byte[data.Length + INT_SIZE];
+            header.CopyTo(packet, 0);
+
+            data.CopyTo(packet, INT_SIZE);
+            return socket.Send(packet);
         }
 
         /// <summary>  
@@ -400,7 +417,18 @@ namespace Server.SocketCore
         {
             socket.SendTimeout = 0;
             int startTickCount = Environment.TickCount;
-            int sent = 0; // how many bytes is already sent  
+
+            // Create new buffer with 4 bytes length header
+            byte[] bufferWithLengthHeader = new byte[INT_SIZE + buffer.Length];
+
+            // Convert length to bytes and add to the new buffer
+            byte[] lengthHeader = BitConverter.GetBytes(buffer.Length);
+            Array.Copy(lengthHeader, 0, bufferWithLengthHeader, 0, INT_SIZE);
+
+            // Copy the actual data into new buffer
+            Array.Copy(buffer, 0, bufferWithLengthHeader, INT_SIZE, buffer.Length);
+
+            int sent = 0;  // how many bytes is already sent
             do
             {
                 if (Environment.TickCount > startTickCount + timeout)
@@ -409,7 +437,7 @@ namespace Server.SocketCore
                 }
                 try
                 {
-                    sent += socket.Send(buffer, offset + sent, size - sent, SocketFlags.None);
+                    sent += socket.Send(bufferWithLengthHeader, offset + sent, size - sent + INT_SIZE, SocketFlags.None);
                 }
                 catch (SocketException ex)
                 {
@@ -417,15 +445,15 @@ namespace Server.SocketCore
                     ex.SocketErrorCode == SocketError.IOPending ||
                     ex.SocketErrorCode == SocketError.NoBufferSpaceAvailable)
                     {
-                        // socket buffer is probably full, wait and try again  
+                        // socket buffer is probably full, wait and try again
                         Thread.Sleep(30);
                     }
                     else
                     {
-                        throw ex; // any serious error occurr  
+                        throw ex;  // any serious error occur
                     }
                 }
-            } while (sent < size);
+            } while (sent < size + INT_SIZE);
         }
 
 
@@ -457,12 +485,13 @@ namespace Server.SocketCore
         /// <param name="e">与接收完成操作相关联的SocketAsyncEventArg对象</param>  
         private void ProcessReceive(SocketAsyncEventArgs e)
         {
+            int countByte = 0;
             if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
             {
                 AsyncUserToken token = (AsyncUserToken)e.UserToken;
                 token.ActiveDateTime = DateTime.Now;
                 Socket socket = token.Socket;
-
+                RingBuffer ringBuffer = token.Rb;
                 if (socket == null || !socket.Connected)
                 {
                     return;
@@ -471,50 +500,54 @@ namespace Server.SocketCore
                 // Copy the received data to the ring buffer
                 byte[] data = new byte[e.BytesTransferred];
                 Array.Copy(e.Buffer, e.Offset, data, 0, e.BytesTransferred);
-                int count = 0;
+                
                 // 如果环形数组为空或者有空间则写入数据
                 if (ringBuffer.IsEmpty || ringBuffer.HavingSpace(e.BytesTransferred))
                 {
-                    lg.INFO($"479行 Written {data.Length} to ring buffer...");
+                    lg.INFO($"479: Written {data.Length} to ring buffer...");
                     ringBuffer.Write(data);
-                    count += data.Length;
+                    countByte += data.Length;
                 }
-                lg.DEBUG($"共写入{count}字节数据到ring buffer...");
+                lg.DEBUG($"Total written {countByte} bytes to ring buffer...");
                 try
                 {
                     while (true)
                     {
-                        if (!ringBuffer.HavingData(sizeof(int)))
+                        if (!ringBuffer.HavingData(INT_SIZE))
                         {
-                            lg.DEBUG($"没有int32数据");
+                            lg.DEBUG($"Haven't int data...");
                             break;
                         }
-                        int dataLength = ringBuffer.ReadHeader();
-                        if (!ringBuffer.HavingData(dataLength))
+                        int packetLength = ringBuffer.ReadHeader() + INT_SIZE;
+                        int dataLength = packetLength - INT_SIZE;
+                        if (!ringBuffer.HavingData(packetLength))
                         {
-                            lg.DEBUG($"没有{dataLength}长的数据");
+                            lg.DEBUG($"Haven't {packetLength} bytes data...");
                             break;
                         }
                         else
                         {
-                            byte[] bytesData = ringBuffer.Read(dataLength);
-                            lg.INFO($"收到消息{Encoding.UTF8.GetString(bytesData)}");
+                            byte[] packet = ringBuffer.Read(packetLength);
+                            byte[] bytesData = new byte[dataLength];
+                            Array.Copy(packet, INT_SIZE, bytesData, 0, dataLength);
+                            lg.INFO($"Received {Encoding.UTF8.GetString(bytesData)} from {((AsyncUserToken)e.UserToken).Socket.RemoteEndPoint}");
                         }
                     }
                 }
                 catch (BytesDataHeaderError ex)
                 {
-                    lg.IMPORTTANT(ex, "受到错误格式的TCP数据");
+                    lg.IMPORTTANT(ex, "Received error data");
                     ringBuffer.Clear();
                 }
                 catch (Exception ex)
                 {
-                    lg.IMPORTTANT(ex, "未知错误");
+                    lg.IMPORTTANT(ex, "Unknown error");
                 }
 
                 // Asynchronously receive more data from the socket
                 if (!socket.ReceiveAsync(e))
                 {
+                    Thread.Sleep(100);
                     // If ReceiveAsync completed synchronously, call ProcessReceive again to process the received data
                     ProcessReceive(e);
                 }
@@ -523,6 +556,7 @@ namespace Server.SocketCore
             {
                 CloseClientSocket(e);
             }
+            //lg.DEBUG($"All data : {count}");
         }
 
         #endregion
@@ -655,6 +689,24 @@ namespace Server.SocketCore
                 disposed = true;
             }
         }
+        #endregion
+
+        #region Stop
+
+        /// <summary>  
+        /// Stop server  
+        /// </summary>  
+        public void Stop()
+        {
+            if (IsRunning)
+            {
+                IsRunning = false;
+                _socketServer.Close();
+                //Close all socket 
+                SocketUserTokenList.CloseAll();
+            }
+        }
+
         #endregion
 
         protected abstract void HandleMessage(string data);

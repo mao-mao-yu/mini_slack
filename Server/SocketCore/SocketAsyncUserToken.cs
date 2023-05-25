@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using Server.Common;
 
 namespace Server.SocketCore
 {
@@ -15,35 +16,28 @@ namespace Server.SocketCore
             get { return socket; }
             set { socket = value; }
         }
-        //自定义的一些内容  
-        private string id;
 
-        private byte[] _aesKey;
+        public string RsaPrivateKey { get; set; }
 
-        private string _rsaPrivateKey;
+        public string RsaPublicKey { get; set; }
 
-        private string _rsaPublicKey;
+        public byte[] AesKey { get; set; }
 
-        public string ID
-        {
-            get { return id; }
-            set { id = value; }
-        }
+        public byte[] AesIV { get; set; }
+
+        public RingBuffer Rb { get; private set; }
+
+        public string GUID { get; set; }
+
         protected DateTime m_ActiveDateTime;
+
         public DateTime ActiveDateTime { get { return m_ActiveDateTime; } set { m_ActiveDateTime = value; } }
 
         protected DateTime m_ConnectDateTime;
         public DateTime ConnectDateTime { get { return m_ConnectDateTime; } set { m_ConnectDateTime = value; } }
-
-        public void SetRsaKeys(string publicKey, string privateKey)
+        public void SetRingBuffer(int size = 2048)
         {
-            _rsaPublicKey = publicKey;
-            _rsaPrivateKey = privateKey;
-        }
-
-        public void SetAesKey(byte[] aesKey)
-        {
-            _aesKey = aesKey;
+            Rb = new RingBuffer(size);
         }
     }
 }

@@ -12,9 +12,9 @@ namespace Server.Converter
             return JsonConvert.SerializeObject(obj);
         }
 
-        public static T GetJsonObj<T>(string jsonStr)
+        public static TResult GetJsonObj<TResult>(string jsonStr)
         {
-            return JsonConvert.DeserializeObject<T>(jsonStr);
+            return JsonConvert.DeserializeObject<TResult>(jsonStr);
         }
     }
 }

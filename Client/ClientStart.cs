@@ -1,10 +1,7 @@
 ﻿using System;
-using Client;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
-using Client.Encryption;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Text;
@@ -38,10 +35,10 @@ class Program
         //byte[] decryptedPassword = AesEncryptor.Decrypt(encryptedPassword, key, iv);
         //Console.WriteLine(Encoding.UTF8.GetString(decryptedPassword));
         List<Thread> threads = new List<Thread>();
-        int threadNum = 1;
+        int threadNum = 500;
         messageNum = 100;
-        //ip = IPAddress.Parse("192.168.10.111");
-        ip = IPAddress.Parse("127.0.0.1");
+        ip = IPAddress.Parse("192.168.10.111");
+        //ip = IPAddress.Parse("127.0.0.1");
         //createConnect(test);
         //Console.ReadKey();
 
@@ -76,13 +73,13 @@ class Program
             clientSocket.Connect(new IPEndPoint(ip, Port));
             byte[] data = new byte[2048];
             int receivedBytes = clientSocket.Receive(data);
-            string receivedMessage = Encoding.UTF8.GetString(data, 0, receivedBytes);
-            Console.WriteLine($"收到UserToken：{receivedMessage}");
-            Console.WriteLine("连接服务器成功");
+            string receivedMessage = Encoding.UTF8.GetString(data, 4, receivedBytes);
+            Console.WriteLine($"Received UserToken：{receivedMessage}");
+            Console.WriteLine("Connect to server successful...");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"连接服务器失败，请按回车键退出！{ex.Message}");
+            Console.WriteLine($"Connect to server error...，Enter to quit！{ex.Message}");
             return;
         }
 
@@ -93,7 +90,7 @@ class Program
         }
         catch (Exception)
         {
-            Console.WriteLine("json字符串解析失败");
+            Console.WriteLine("Convert json to str error");
             throw;
         }
 
@@ -106,7 +103,7 @@ class Program
         for (int i = 0; i < messageNum; i++)
         {
             totalBytes += clientSocket.Send(allData);
-            Console.WriteLine($"现在发送了{totalBytes}字节");
+            Console.WriteLine($"Sended {totalBytes} bytes");
         }
         Console.WriteLine(totalBytes);
         //    for (int i = 0; i < messageNum; i++)

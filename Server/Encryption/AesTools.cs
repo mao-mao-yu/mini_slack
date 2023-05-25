@@ -7,14 +7,14 @@ namespace Server.Encryption
     public static class AesEncrypter
     {
         public static Encoding DefaultEncoding { get; set; } = Encoding.UTF8;
-        public static int KeySize { get; } = 256;
+        public static int KeySize { get; }
 
         /// <summary>
         /// Random Key
         /// </summary>
         /// <param name="keySize"></param>
         /// <returns></returns>
-        public static byte[] GenerateRandomKey(int keySize)
+        public static byte[] GenerateRandomKey(int keySize = 256)
         {
             using (Aes aes = Aes.Create())
             {

@@ -28,7 +28,7 @@ namespace Server.Common
         /// ctor
         /// </summary>
         /// <param name="size">Buffer size</param>
-        public RingBuffer(int size = 4096)
+        public RingBuffer(int size)
         {
             buffer = new byte[size];
             Size = size;
@@ -50,7 +50,7 @@ namespace Server.Common
             }
 
             byte[] result = new byte[length];
-            lg.DEBUG($"Read现在的ReadIndex = {ReadIndex}, WriteIndex = {WriteIndex}");
+            lg.DEBUG($"Read method start ReadIndex is {ReadIndex}");
             int space = Size - ReadIndex;
             if (length <= space)
             {
@@ -63,7 +63,7 @@ namespace Server.Common
                 Buffer.BlockCopy(buffer, 0, result, space, length - space);
                 ReadIndex = length - space;
             }
-            lg.DEBUG($"Read读完的ReadIndex = {ReadIndex}, WriteIndex = {WriteIndex}");
+            lg.DEBUG($"Read method end ReadIndex is {ReadIndex}");
             return result;
         }
 
@@ -73,7 +73,7 @@ namespace Server.Common
             {
                 throw new ArgumentException("Length is larger than buffer size");
             }
-            lg.DEBUG($"Write现在的ReadIndex = {ReadIndex}, WriteIndex = {WriteIndex}");
+            lg.DEBUG($"Write method start WriteIndex is {WriteIndex}");
             int space = Size - WriteIndex;
             if (data.Length <= space)
             {
@@ -86,12 +86,21 @@ namespace Server.Common
                 Array.Copy(data, space, buffer, 0, data.Length - space);
                 WriteIndex = data.Length - space;
             }
-            lg.DEBUG($"Write写完的ReadIndex = {ReadIndex}, WriteIndex = {WriteIndex}");
+            lg.DEBUG($"Write method end WriteIndex is {WriteIndex}");
+        }
+
+        private byte NoMoveRead(int index)
+        {
+            return buffer[index];
         }
 
         public int ReadHeader()
         {
-            byte[] dataLengthBytes = Read(4);
+            byte[] dataLengthBytes = new byte[4];
+            for (int i = 0; i < dataLengthBytes.Length; i++)
+            {
+                dataLengthBytes[i] = buffer[ReadIndex + i];
+            }
             int dataLength = BitConverter.ToInt32(dataLengthBytes);
             return dataLength;
         }
