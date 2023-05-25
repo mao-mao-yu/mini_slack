@@ -8,12 +8,19 @@ namespace Server.Config
 {
     public class ServerSetting
     {
+        #region Fields
+        /// <summary>
+        /// MyDict
+        /// </summary>
+        private readonly MyDictionary<string, object> configDict = new MyDictionary<string, object>();
+
+        #endregion
 
         #region Properties
         /// <summary>
         /// Server listening ip 
         /// </summary>
-        public IPAddress ServerIP { get; private set; }
+        public string ServerIP { get; private set; }
 
         /// <summary>
         /// Server listening port
@@ -47,11 +54,17 @@ namespace Server.Config
             {
                 throw new FileNotFoundException("Server setting file not found...");
             }
-
             string allText = File.ReadAllText(filePath);
-            MyDictionary<string, object> configDict = JsonConverter.GetJsonObj<MyDictionary<string, object>>(allText);
-            ServerIP = IPAddress.Parse((string)configDict.Get("ip"));
+            configDict = JsonConverter.GetJsonObj<MyDictionary<string, object>>(allText);
         }
 
+        public void ReadConfig()
+        {
+            ServerIP = configDict.Get("ip")?.ToString();
+            Port = configDict.Get("port")?(int);
+            ServiceIPEndPoint = new IPEndPoint(ServerIP, Port);
+            MaxClientNum = (int)configDict.Get("maxClient");
+
+        }
     }
 }
