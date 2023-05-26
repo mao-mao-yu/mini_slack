@@ -1,6 +1,5 @@
-﻿using Server.Common;
-
-namespace Server.Config
+﻿
+namespace Server.Setting
 {
     public class ServerSetting : SettingBase
     {
@@ -34,6 +33,5 @@ namespace Server.Config
         /// </summary>
         public int BufferManagerSize { get; set; }
         #endregion
-
     }
 }

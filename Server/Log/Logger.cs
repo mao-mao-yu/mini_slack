@@ -1,85 +1,50 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using System.Threading;
-using Server.Common;
+using Server.Setting;
+using Server.Data;
 
 namespace Server.Log
 {
     /// <summary>
     /// Logger
     /// </summary>
-    public class Logger
+    public static class Logger
     {
         #region Fields
-        /// <summary>
-        /// 本地工作目录
-        /// </summary>
-        private static string _currentPath;
-
         /// <summary>
         /// Lock
         /// </summary>
         private static readonly object _lockObj = new object();
 
         /// <summary>
-        /// log文件夹输出目录
-        /// </summary>
-        private readonly string _logFolderPath;
-
-        /// <summary>
-        /// 当前日期时间
-        /// </summary>
-        private DateTime _dateTime;
-
-        /// <summary>
         /// 配置文件字典
         /// </summary>
-        private LoggerSetting setting;
+        private static LoggerSetting setting = SettingBase.LoadSetting<LoggerSetting>(Const.LOGGER_SETTING_PATH);
 
         /// <summary>
         /// 是否写入文件
         /// </summary>
-        private bool _isWriteToFile;
+        private static bool _isWriteToFile = setting.IsWriteToFile;
 
         /// <summary>
         /// 控制台输出等级
         /// </summary>
-        private readonly LogLevel _consoleWriteLevel;
+        private static readonly LogLevel _consoleWriteLevel = setting.ConsoleWriteLevel;
 
         /// <summary>
         /// 文件输出等级
         /// </summary>
-        private readonly LogLevel _fileWriteLevel;
+        private static readonly LogLevel _fileWriteLevel = setting.FileWriteLevel;
         #endregion
 
-        #region Ctor
-        public Logger()
-        {
-            // 获取当前工作路径
-            _currentPath = Directory.GetCurrentDirectory();
-            // Log输出路径
-            _logFolderPath = Path.Combine(_currentPath, "Log");
-            // 配置文件路径
-            string settingPath = Path.Combine(_currentPath, "Config","LoggerSetting.json");
-            setting = SettingBase.LoadSetting<LoggerSetting>(settingPath);
-            _consoleWriteLevel = setting.ConsoleWriteLevel;
-            _fileWriteLevel = setting.FileWriteLevel;
-            _isWriteToFile = setting.IsWriteToFile;
-        }
-        #endregion
-
-        #region To console
+        #region Write to console
         /// <summary>
         /// 控制台输出
         /// </summary>
         /// <param name="message"></param>
         /// <param name="logLevel"></param>
-        public void WriteMessage(string message, LogLevel logLevel)
+        public static void WriteMessage(string message, LogLevel logLevel)
         {
             if ((int)_consoleWriteLevel == (int)LogLevel.OFF)
             {
@@ -92,59 +57,97 @@ namespace Server.Log
             Console.WriteLine($"[{GetDayStr()}] [{logLevel}] : {message}");
         }
 
-        public void ALL(string msg)
+        public static void ALL(string msg)
         {
             WriteMessage(msg, LogLevel.ALL);
         }
 
-        public void DEBUG(string msg)
+        public static void DEBUG(string msg)
         {
             WriteMessage(msg, LogLevel.DEBUG);
         }
 
-        public void INFO(string msg)
+        public static void INFO(string msg)
         {
             WriteMessage(msg, LogLevel.INFO);
         }
 
-        public void WARNING(string msg)
+        public static void WARNING(string msg)
         {
             WriteMessage(msg, LogLevel.WARNING);
         }
 
-        public void ERROR(string msg)
+        public static void ERROR(string msg)
         {
             WriteMessage(msg, LogLevel.ERROR);
         }
         #endregion
 
+        #region Write exception to file
+        /// <summary>
+        /// 控制台输出
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="logLevel"></param>
+        public static void WriteMessage(string message, Exception e, LogLevel logLevel)
+        {
+            message = $"[{ GetDayStr()}] [{logLevel}] : Message : {message}\nException message : {e.Message}\nStackTrace : {e.StackTrace}";
+            WriteMessage(message, logLevel);
+        }
+
+        public static void ALL(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.ALL);
+        }
+
+        public static void DEBUG(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.DEBUG);
+        }
+
+        public static void INFO(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.INFO);
+        }
+
+        public static void WARNING(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.WARNING);
+        }
+
+        public static void ERROR(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.ERROR);
+        }
+        #endregion
+
         #region Write to file
-        public void FALL(string msg)
+        public static void FALL(string msg)
         {
             WriteFileMessage(msg, LogLevel.ALL);
         }
 
-        public void FDEBUG(string msg)
+        public static void FDEBUG(string msg)
         {
             WriteFileMessage(msg, LogLevel.DEBUG);
         }
 
-        public void FINFO(string msg)
+        public static void FINFO(string msg)
         {
             WriteFileMessage(msg, LogLevel.INFO);
         }
 
-        public void FWARNING(string msg)
+        public static void FWARNING(string msg)
         {
             WriteFileMessage(msg, LogLevel.WARNING);
         }
 
-        public void FERROR(string msg)
+        public static void FERROR(string msg)
         {
             WriteFileMessage(msg, LogLevel.ERROR);
         }
 
-        public void WriteFileMessage(string message, LogLevel logLevel)
+        public static void WriteFileMessage(string message, LogLevel logLevel)
         {
             if ((int)_fileWriteLevel == (int)LogLevel.OFF)
             {
@@ -161,39 +164,39 @@ namespace Server.Log
         }
         #endregion
 
-        #region Exception To File
-        public void FALL(Exception e, string msg)
+        #region Write exception to file
+        public static void FALL(Exception e, string msg)
         {
             WriteError(e, msg, LogLevel.ALL);
         }
 
-        public void FDEBUG(Exception e, string msg)
+        public static void FDEBUG(Exception e, string msg)
         {
             WriteError(e, msg, LogLevel.DEBUG);
         }
 
-        public void FINFO(Exception e, string msg)
+        public static void FINFO(Exception e, string msg)
         {
             WriteError(e, msg, LogLevel.INFO);
         }
 
-        public void FWARNING(Exception e, string msg)
+        public static void FWARNING(Exception e, string msg)
         {
             WriteError(e, msg, LogLevel.WARNING);
         }
 
-        public void FERROR(Exception e, string msg)
+        public static void FERROR(Exception e, string msg)
         {
             WriteError(e, msg, LogLevel.ERROR);
         }
 
-        public void WriteError(Exception ex, string msg, LogLevel logLevel)
+        public static void WriteError(Exception ex, string msg, LogLevel logLevel)
         {
             if ((int)_fileWriteLevel == (int)LogLevel.OFF)
             {
                 return;
             }
-            if((int)logLevel < (int)_fileWriteLevel)
+            if ((int)logLevel < (int)_fileWriteLevel)
             {
                 return;
             }
@@ -205,19 +208,13 @@ namespace Server.Log
         #endregion
 
         #region Common
-        private void GetNowTime()
-        {
-            _dateTime = DateTime.Now;
-        }
-
         /// <summary>
         /// 获取当前时间
         /// </summary>
         /// <returns></returns>
-        private string GetDayStr()
+        private static string GetDayStr()
         {
-            GetNowTime();
-            return _dateTime.ToString("yyyy-MM-dd HH:mm:ss ffff");
+            return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss ffff");
         }
 
         /// <summary>
@@ -226,42 +223,48 @@ namespace Server.Log
         /// <param name="msg"></param>
         /// <param name="level"></param>
         /// <returns></returns>
-        public bool FileWriter<T>(string msg, T level)
+        public static bool FileWriter<T>(string msg, T level)
         {
-            GetNowTime();                                                                                           // 今の時間を更新
-            string fileName = $"{_dateTime:yyyy-MM-dd HH}：{_dateTime.Minute / 10 * 10}~{_dateTime.Minute / 10 * 10 + 10}.txt";                      // テキストファイルネーム
+            DateTime dateTime = DateTime.Now;                                                                                           // 今の時間を更新
+            string fileName = $"{dateTime:yyyy-MM-dd HH}：{dateTime.Minute / 10 * 10}~{dateTime.Minute / 10 * 10 + 10}.txt";                      // テキストファイルネーム
             (string dayFolderPath, string hourFolderPath) = SetPath();
             CheckFileExists(dayFolderPath, hourFolderPath);
             string filePath = Path.Combine(hourFolderPath, fileName);
 
             lock (_lockObj)
             {
-                using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
+                try
                 {
-                    using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
+                    using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
                     {
-                        string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
-                        writer.WriteLineAsync(dumpMsg);
-                        DEBUG($"Written to file : {fileName}...");
+                        using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
+                        {
+                            string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
+                            writer.WriteLineAsync(dumpMsg);
+                            DEBUG($"Written to file : {fileName}...");
+                        }
                     }
                 }
+                catch (Exception e)
+                {
+                    ERROR("Log writing error...", e);
+                }
             }
-
             return true; // 表示文件写入成功
         }
 
-        private (string, string) SetPath()
+        private static (string, string) SetPath()
         {
-            string today = _dateTime.ToString("yyyy-MM-dd");                                            // 日付
-            string hour = _dateTime.ToString("HH");                                                     // 時間
+            string today = DateTime.Now.ToString("yyyy-MM-dd");                                            // 日付
+            string hour = DateTime.Now.ToString("HH");                                                     // 時間
 
-            string dayFolderPath = Path.Combine(_logFolderPath, today);                                 // 日付フォルダー
+            string dayFolderPath = Path.Combine(Const.LOG_FOLDER_PATH, today);                          // 日付フォルダー
             string hourFolderPath = Path.Combine(dayFolderPath, hour + "H");                            // 時間区分フォルダー
 
             return (dayFolderPath, hourFolderPath);
         }
 
-        private void CheckFileExists(string dayFolderPath, string hourFolderPath)
+        private static void CheckFileExists(string dayFolderPath, string hourFolderPath)
         {
             if (!Directory.Exists(dayFolderPath))
             {
@@ -279,4 +282,5 @@ namespace Server.Log
         }
         #endregion
     }
+
 }

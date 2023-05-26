@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Server.Log;
-using Server.Converter;
+using Server.Common;
 
 namespace Server.Data
 {
@@ -32,7 +32,7 @@ namespace Server.Data
             {
                 try
                 {
-                    _dataDict = JsonConverter.GetJsonObj<Dictionary<string, object>>(File.ReadAllText(filePath));
+                    _dataDict = Json.Load<Dictionary<string, object>>(File.ReadAllText(filePath));
                 }
                 catch (Exception e)
                 {
@@ -73,7 +73,7 @@ namespace Server.Data
                 using (StreamWriter sw = new StreamWriter(fileStream))
                 {
                     // 写入内容
-                    sw.WriteAsync(JsonConverter.GetJsonStr(_dataDict));
+                    sw.WriteAsync(Json.Dump(_dataDict));
                 }
 
                 // 释放文件锁定

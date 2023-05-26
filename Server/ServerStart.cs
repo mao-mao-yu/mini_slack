@@ -11,7 +11,7 @@ using System.Net;
 using Server;
 using Server.ServerCore;
 using Server.Encryption;
-using Server.Config;
+using Server.Setting;
 
 internal class ServerStart
 {

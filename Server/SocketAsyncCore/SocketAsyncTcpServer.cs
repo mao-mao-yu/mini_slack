@@ -27,11 +27,6 @@ namespace Server.SocketAsyncCore
         private const int INT_SIZE = sizeof(int);
 
         /// <summary>
-        /// Logger
-        /// </summary>
-        protected Logger lg = new Logger();
-
-        /// <summary>
         /// Listener Socket
         /// </summary>
         private Socket _socketServer;
@@ -69,7 +64,7 @@ namespace Server.SocketAsyncCore
         /// <summary>
         /// Object pool
         /// </summary>
-        SocketAsyncEventArgsPool _objectPool;
+        SocketAsyncEventArgsPool _socketAsyncEventArgsPool;
 
         /// <summary>
         /// Online user
@@ -156,7 +151,7 @@ namespace Server.SocketAsyncCore
 
             _bufferManager = new SocketAsyncBufferManager(_bufferSize * (_maxClient + 1) * opsToPreAlloc, _bufferSize);
 
-            _objectPool = new SocketAsyncEventArgsPool(_maxClient);
+            _socketAsyncEventArgsPool = new SocketAsyncEventArgsPool(_maxClient);
 
             SocketUserTokenList = new SocketAsyncEventArgsList();
 
@@ -187,11 +182,13 @@ namespace Server.SocketAsyncCore
 
                 // assign a byte buffer from the buffer pool to the SocketAsyncEventArg object  
                 _bufferManager.SetBuffer(readWriteEventArg);
+                Logger.ALL("Set readWriteEventArg buffer...");
 
                 // add SocketAsyncEventArg to the pool  
-                _objectPool.Push(readWriteEventArg);
+                _socketAsyncEventArgsPool.Push(readWriteEventArg);
+                Logger.ALL("Push a args to SocketAsyncEventArgsPool...");
             }
-
+            Logger.DEBUG("Inited SocketAsyncEventArgs...");
         }
 
         private AsyncUserToken InitUserToken(SocketAsyncEventArgs asyniar, Socket s)
@@ -242,7 +239,7 @@ namespace Server.SocketAsyncCore
                     _socketServer.Bind(localEndPoint);
                 }
                 // Start listening
-                lg.INFO($"Tcp server start listening on {Address}:{Port}");
+                Logger.INFO($"Tcp server start listening on {Address}:{Port}");
                 _socketServer.Listen(_maxClient);
 
                 // Start accept
@@ -316,7 +313,7 @@ namespace Server.SocketAsyncCore
                     try
                     {
                         Interlocked.Increment(ref _clientCount);        //原子操作加1  
-                        SocketAsyncEventArgs asyniar = _objectPool.Pop();
+                        SocketAsyncEventArgs asyniar = _socketAsyncEventArgsPool.Pop();
                         //用户的token操作
                         AsyncUserToken token = InitUserToken(asyniar, s);
                         SocketUserTokenList.Add(asyniar);   //Add event to token list
@@ -643,7 +640,7 @@ namespace Server.SocketAsyncCore
             }
             Interlocked.Decrement(ref _clientCount);
             _maxAcceptedClients.Release();  //释放线程信号量
-            _objectPool.Push(e);            //SocketAsyncEventArg 对象被释放，压入可重用队列。
+            _socketAsyncEventArgsPool.Push(e);            //SocketAsyncEventArg 对象被释放，压入可重用队列。
             SocketUserTokenList.Remove(e);  //去除正在连接的用户
         }
         #endregion

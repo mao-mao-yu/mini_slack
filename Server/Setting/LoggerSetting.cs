@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Server.Common;
+﻿using Server.Log;
 
-namespace Server.Log
+namespace Server.Setting
 {
     public class LoggerSetting : SettingBase
     {
