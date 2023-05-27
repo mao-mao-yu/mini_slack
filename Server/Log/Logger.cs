@@ -20,12 +20,12 @@ namespace Server.Log
         /// <summary>
         /// 配置文件字典
         /// </summary>
-        private static LoggerSetting setting = SettingBase.LoadSetting<LoggerSetting>(Const.LOGGER_SETTING_PATH);
+        private static readonly LoggerSetting setting = SettingBase.LoadSetting<LoggerSetting>(Const.LOGGER_SETTING_PATH);
 
         /// <summary>
         /// 是否写入文件
         /// </summary>
-        private static bool _isWriteToFile = setting.IsWriteToFile;
+        private static readonly bool _isWriteToFile = setting.IsWriteToFile;
 
         /// <summary>
         /// 控制台输出等级
@@ -240,7 +240,7 @@ namespace Server.Log
                         using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
                         {
                             string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
-                            writer.WriteLineAsync(dumpMsg);
+                            writer.WriteLine(dumpMsg);
                             DEBUG($"Written to file : {fileName}...");
                         }
                     }

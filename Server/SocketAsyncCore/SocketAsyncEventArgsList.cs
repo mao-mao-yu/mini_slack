@@ -33,6 +33,10 @@ namespace Server.SocketAsyncCore
             }
         }
 
+        public int Count()
+        {
+            return m_list.Count;
+        }
 
         /// <summary>
         /// Remove a SocketAsyncEventArgs from list

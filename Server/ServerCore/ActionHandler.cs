@@ -22,17 +22,10 @@ namespace Server.ServerCore
         //};
 
         #region ctor
-        public ActionHandler(int listenPort, int maxClient) : base(IPAddress.Any, listenPort, maxClient)
+        public ActionHandler() : base()
         {
         }
 
-        public ActionHandler(IPAddress localIPAddress, int listenPort, int maxClient) : base(localIPAddress, listenPort, maxClient)
-        {
-        }
-
-        public ActionHandler(IPEndPoint localEP, int maxClient) : base(localEP, maxClient)
-        {
-        }
         #endregion
         protected override void HandleMessage(string data)
         {

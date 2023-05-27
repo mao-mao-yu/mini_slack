@@ -1,129 +1,157 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Net.WebSockets;
-using System.Threading;
-using Newtonsoft.Json;
+using Client.Setting;
+using Client.Data;
 using System.Net;
 using System.Net.Sockets;
+using Client.Log;
+using System.Threading;
+using System.Text;
 using System.IO;
-using System.Threading.Tasks;
-
-using Client.Encryption;
-using Client.FileHandler;
-using Client.Common;
-
 
 namespace Client.ClientCore
 {
-    public class Client
+    public class AsyncClient
     {
-        //private readonly Dictionary<string, object> jsonData = JsonFileHandler.LoadJsonObjFromFile(@"UserData.json");
-        private const string UserFileName = @"UserData.json";
-        private Dictionary<string, object> jsonData = new Dictionary<string, object>() { };
+        private ClientSetting _clientSetting;
 
-        public Client(string ip, int port)
-        { 
-        }
+        private readonly IPAddress serverIP;
 
-        //public async Task<bool> Register(string username, string password)
-        //{
-        //    return await PerfromRegister(username, password);
-        //}
+        private readonly int port;
 
-        ////private async Task<bool> PerfromRegister(string username, string password)
-        ////{
-        ////}
+        private readonly int bufferSize;
 
-        //public async Task<bool> CheckLogin()
-        //{
-        //    if (!File.Exists(UserFileName))
-        //    {
-        //        return false;
-        //    }
-        //    string UserDataStr = File.ReadAllText(UserFileName);
-        //    Dictionary<string, string> UserDataDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(UserDataStr);
-        //    string username = UserDataDict["username"];
-        //    string password = UserDataDict["password"];
-        //    bool res = await PerformLogin(username, password);
-        //    return res;
-        //}
+        private readonly RingBuffer ringBuffer;
 
-        //public async Task<bool> Login(string username, string password)
-        //{
-        //    return await PerformLogin(username, password);
-        //}
+        private string rsaPublicKey;
 
-        /// <summary>
-        /// Perform login
-        /// </summary>
-        /// <param name="username"></param>
-        /// <param name="password"></param>
-        /// <returns></returns>
-        //private async Task<bool> PerformLogin(string username, string password)
-        //{
-        //    Request request = new Request("login", username, password);
-        //    string jsonStr = request.GetJsonStr();
-        //    try
-        //    {
-        //        // 发送登录消息
-        //        await TcpSendStr(jsonStr);
+        private string GUID;
 
-        //        // 接受登录验证响应
-        //        string recv = await TcpRecvStr();
+        private NetworkStream stream;
 
-        //        // 解析响应
-        //        Response response = new Response(recv);
-        //        Dictionary<string, string> jsonDict = response.Get();
-        //        bool getActionRes = jsonDict.TryGetValue("action", out string action);
-        //        if (getActionRes == false)
-        //        {
-        //            return false;
-        //        }
-        //        if (action.Equals("login") == false)
-        //        {
-        //            return false;
-        //        }
-        //        if (!jsonDict.TryGetValue("result", out string getResultRes))
-        //        {
-        //            return false;
-        //        }
-        //        Console.WriteLine(jsonDict["msg"]);
-        //        return bool.Parse(getResultRes);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine("Login error..." + e.Message);
-        //    }
-        //    return false;
-        //}
-
-        public void ActionHandler(Dictionary<string, string> jsonDict)
+        private TcpClient client;
+        public AsyncClient()
         {
-            throw new NotImplementedException();
+            _clientSetting = SettingBase.LoadSetting<ClientSetting>(Const.CLIENT_SETTING_PATH);
+            serverIP = IPAddress.Parse(_clientSetting.ServerIP);
+            port = _clientSetting.Port;
+            bufferSize = _clientSetting.BufferSize;
+            ringBuffer = new RingBuffer(bufferSize);
         }
 
+        public void StartConnect()
+        {
+            client = new TcpClient();
+            client.BeginConnect(serverIP, port, ConnectedCallback, null);
+        }
 
+        private void ConnectedCallback(IAsyncResult result)
+        {
+            if (result.IsCompleted)
+            {
+                try
+                {
+                    client.EndConnect(result);
+                    if (!client.Connected)
+                    {
+                        Logger.FDEBUG($"Server is offline");
+                        return;
+                    }
 
+                    stream = client.GetStream();
+                    try
+                    {
+                        FirstPacket();
+                        StartRecv();
+                    }
+                    catch (IOException e)
+                    {
+                        // handle exception when reading
+                    }
+                }
+                catch (Exception e)
+                {
+                    // log and reconnect
+                }
+            }
+            else
+            {
+                // log and reconnect
+            }
+        }
 
-        //public Response SendMsg(string username, string msg)
-        //{
-        //}
-        //public Response AddFriend()
-        //{
-        //}
-        //public Response GetFriendList()
-        //{
-        //}
-        //public Response DelFriend()
-        //{
-        //}
-        //public Response JoinGroup()
-        //{
-        //}
-        //public Response LeaveGroup()
-        //{
-        //}
+        private void ReconnectAfterDelay()
+        {
+            Thread.Sleep(5000);
+            StartConnect();
+        }
 
+        private void FirstPacket()
+        {
+            stream.Read(new byte[Const.INT_SIZE], 0, Const.INT_SIZE);
+            byte[] rsaBytesPublicKey = new byte[Const.RSA_PUBLICKEY_SIZE];
+            stream.Read(rsaBytesPublicKey, 0, Const.RSA_PUBLICKEY_SIZE);
+            rsaPublicKey = Encoding.UTF8.GetString(rsaBytesPublicKey);
+
+            byte[] bytesGUID = new byte[Const.GUID_SIZE];
+            stream.Read(bytesGUID, 0, Const.GUID_SIZE);
+            GUID = Encoding.UTF8.GetString(bytesGUID);
+
+            Logger.DEBUG($"Received first packet{rsaPublicKey}\n{GUID}");
+        }
+
+        private void StartRecv()
+        {
+            byte[] buffer = new byte[bufferSize];
+            stream.BeginRead(buffer, 0, buffer.Length, ReceivedCallback, buffer);
+        }
+
+        private void ReceivedCallback(IAsyncResult result)
+        {
+            byte[] buffer = (byte[])result.AsyncState;
+            int bytesRead = stream.EndRead(result);
+            Logger.DEBUG($"Received {bytesRead} bytes data...");
+            if (bytesRead > 0)
+            {
+                if (ringBuffer.HavingSpace(bytesRead))
+                {
+                    ringBuffer.Write(buffer, 0, bytesRead);
+                }
+                else
+                {
+                    ProcessRecv();
+                }
+            }
+
+            // 继续异步读取操作
+            stream.BeginRead(buffer, 0, buffer.Length, ReceivedCallback, buffer);
+        }
+
+        private void ProcessRecv()
+        {
+            while (true)
+            {
+                if (!ringBuffer.HavingData(Const.INT_SIZE))
+                {
+                    Logger.DEBUG($"Haven't int data...");
+                    break;
+                }
+                int packetLength = ringBuffer.ReadHead() + Const.INT_SIZE;
+                int dataLength = packetLength - Const.INT_SIZE;
+                if (!ringBuffer.HavingData(packetLength))
+                {
+                    Logger.DEBUG($"Haven't {packetLength} bytes data...");
+                    break;
+                }
+                else
+                {
+                    byte[] packet = ringBuffer.Read(packetLength);
+                    byte[] bytesData = new byte[dataLength];
+                    Array.Copy(packet, Const.INT_SIZE, bytesData, 0, dataLength);
+                    Logger.INFO($"Received {Encoding.UTF8.GetString(bytesData)} from {serverIP}");
+                }
+            }
+
+        }
     }
 }

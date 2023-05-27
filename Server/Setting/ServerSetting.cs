@@ -1,12 +1,7 @@
-﻿
-namespace Server.Setting
+﻿namespace Server.Setting
 {
     public class ServerSetting : SettingBase
     {
-        #region Fields
-
-        #endregion
-
         #region Properties
         /// <summary>
         /// Server listening ip 
@@ -32,6 +27,16 @@ namespace Server.Setting
         /// BufferManager size
         /// </summary>
         public int BufferManagerSize { get; set; }
+
+        /// <summary>
+        /// Default encoding
+        /// </summary>
+        public string  DefaultEncoding { get; set; }
+
+        /// <summary>
+        /// Aes key size
+        /// </summary>
+        public int AesKeySize { get; set; }
         #endregion
     }
 }

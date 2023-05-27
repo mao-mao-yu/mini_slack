@@ -1,260 +1,220 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
+using Client.Setting;
+using Client.Data; 
 
 namespace Client.Log
 {
     /// <summary>
     /// Logger
     /// </summary>
-    public class Logger
+    public static class Logger
     {
         #region Fields
         /// <summary>
-        /// 文件锁
+        /// Lock
         /// </summary>
-        private static readonly object lockObject = new object();
-
-        /// <summary>
-        /// 本地工作目录
-        /// </summary>
-        private static string _currentPath;
-
-        /// <summary>
-        /// log文件夹输出目录
-        /// </summary>
-        private readonly string _logFolderPath;
-
-        /// <summary>
-        /// 当前日期时间
-        /// </summary>
-        private DateTime _dateTime;
-
-        /// <summary>
-        /// 配置文件路径
-        /// </summary>
-        private readonly string _configPath;
+        private static readonly object _lockObj = new object();
 
         /// <summary>
         /// 配置文件字典
         /// </summary>
-        private readonly Dictionary<string, int> _configDict;
-
-        /// <summary>
-        /// 配置文件控制台输出等级
-        /// </summary>
-        private readonly int _configLogLevel;
-
-        /// <summary>
-        /// 配置文件输出text等级
-        /// </summary>
-        private readonly int _configOperateLevel;
+        private static readonly LoggerSetting setting = SettingBase.LoadSetting<LoggerSetting>(Const.LOGGER_SETTING_PATH);
 
         /// <summary>
         /// 是否写入文件
         /// </summary>
-        private readonly bool _configAllWrite;
+        private static readonly bool _isWriteToFile = setting.IsWriteToFile;
+
+        /// <summary>
+        /// 控制台输出等级
+        /// </summary>
+        private static readonly LogLevel _consoleWriteLevel = setting.ConsoleWriteLevel;
+
+        /// <summary>
+        /// 文件输出等级
+        /// </summary>
+        private static readonly LogLevel _fileWriteLevel = setting.FileWriteLevel;
         #endregion
 
-        #region Property
-        /// <summary>
-        /// AllWrite属性 是否写入文件
-        /// </summary>
-        public bool AllWrite => _configAllWrite;
-        #endregion
-
-        #region Ctor
-        public Logger()
-        {
-            // 获取当前工作路径
-            _currentPath = Directory.GetCurrentDirectory();
-            // Log输出路径
-            _logFolderPath = Path.Combine(_currentPath, "Log");
-            // 配置文件路径
-            _configPath = Path.Combine(_currentPath, "LogConfig.json");
-            _configDict = GetConfigDictionary();
-            _configLogLevel = GetConfigLogLevel();
-            _configOperateLevel = GetConfigOperateLevel();
-            _configAllWrite = GetConfigAllWrite();
-
-        }
-        #endregion
-
-        #region Get config
-        /// <summary>
-        /// 获取配置文件并转为字典
-        /// </summary>
-        /// <returns></returns>
-        private Dictionary<string, int> GetConfigDictionary()
-        {
-            string configJson = File.ReadAllText(_configPath, Encoding.UTF8);
-            return JsonConvert.DeserializeObject<Dictionary<string, int>>(configJson);
-        }
-
-        /// <summary>
-        /// 获取日志输出等级
-        /// </summary>
-        /// <returns></returns>
-        private int GetConfigLogLevel()
-        {
-            if (_configDict.ContainsKey("LogLevel"))
-            {
-                return _configDict["LogLevel"];
-            }
-            return 1;
-        }
-
-        /// <summary>
-        /// 获取日志输出文件等级
-        /// </summary>
-        /// <returns></returns>
-        private int GetConfigOperateLevel()
-        {
-            if (_configDict.ContainsKey("OperateLevel"))
-            {
-                return _configDict["OperateLevel"];
-            }
-            return 1;
-        }
-
-        /// <summary>
-        /// 获取是否写入文件bool
-        /// </summary>
-        /// <returns></returns>
-        private bool GetConfigAllWrite()
-        {
-            if (_configDict.ContainsKey("UseFileWriter"))
-            {
-                if (_configDict["UseFileWriter"] == 0)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            return true;
-        }
-        #endregion
-
-        #region To console
+        #region Write to console
         /// <summary>
         /// 控制台输出
         /// </summary>
         /// <param name="message"></param>
         /// <param name="logLevel"></param>
-        public void WriteMessage(string message, LogLevel logLevel)
+        public static void WriteMessage(string message, LogLevel logLevel)
         {
-            if ((int)logLevel < _configLogLevel)
+            if ((int)_consoleWriteLevel == (int)LogLevel.OFF)
+            {
+                return;
+            }
+            if ((int)logLevel < (int)_consoleWriteLevel)
             {
                 return;
             }
             Console.WriteLine($"[{GetDayStr()}] [{logLevel}] : {message}");
         }
 
-        public void DEBUG(string msg)
+        public static void ALL(string msg)
+        {
+            WriteMessage(msg, LogLevel.ALL);
+        }
+
+        public static void DEBUG(string msg)
         {
             WriteMessage(msg, LogLevel.DEBUG);
         }
 
-        public void INFO(string msg)
+        public static void INFO(string msg)
         {
             WriteMessage(msg, LogLevel.INFO);
         }
 
-        public void WARNING(string msg)
+        public static void WARNING(string msg)
         {
             WriteMessage(msg, LogLevel.WARNING);
         }
 
-        public void ERROR(string msg)
+        public static void ERROR(string msg)
         {
             WriteMessage(msg, LogLevel.ERROR);
         }
         #endregion
 
-        #region Write to file
+        #region Write exception to file
+        /// <summary>
+        /// 控制台输出
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="logLevel"></param>
+        public static void WriteMessage(string message, Exception e, LogLevel logLevel)
+        {
+            message = $"[{ GetDayStr()}] [{logLevel}] : Message : {message}\nException message : {e.Message}\nStackTrace : {e.StackTrace}";
+            WriteMessage(message, logLevel);
+        }
 
-        public void FDEBUG(string msg)
+        public static void ALL(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.ALL);
+        }
+
+        public static void DEBUG(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.DEBUG);
+        }
+
+        public static void INFO(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.INFO);
+        }
+
+        public static void WARNING(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.WARNING);
+        }
+
+        public static void ERROR(string msg, Exception e)
+        {
+            WriteMessage(msg, e, LogLevel.ERROR);
+        }
+        #endregion
+
+        #region Write to file
+        public static void FALL(string msg)
+        {
+            WriteFileMessage(msg, LogLevel.ALL);
+        }
+
+        public static void FDEBUG(string msg)
         {
             WriteFileMessage(msg, LogLevel.DEBUG);
         }
 
-        public void FINFO(string msg)
+        public static void FINFO(string msg)
         {
             WriteFileMessage(msg, LogLevel.INFO);
         }
 
-        public void FWARNING(string msg)
+        public static void FWARNING(string msg)
         {
             WriteFileMessage(msg, LogLevel.WARNING);
         }
 
-        public void FERROR(string msg)
+        public static void FERROR(string msg)
         {
             WriteFileMessage(msg, LogLevel.ERROR);
         }
 
-        public void WriteFileMessage(string message, LogLevel logLevel)
+        public static void WriteFileMessage(string message, LogLevel logLevel)
         {
-            if ((int)logLevel < _configLogLevel)
+            if ((int)_fileWriteLevel == (int)LogLevel.OFF)
             {
                 return;
             }
-            if (_configAllWrite)
+            if ((int)logLevel < (int)_fileWriteLevel)
+            {
+                return;
+            }
+            if (_isWriteToFile)
             {
                 FileWriter(message, logLevel);
             }
         }
         #endregion
 
-        #region Exception To File
-        public void INSIGNIFICANT(Exception e, string msg)
+        #region Write exception to file
+        public static void FALL(Exception e, string msg)
         {
-            WriteError(e, msg, OperateLevel.INSIGNIFICANT);
+            WriteError(e, msg, LogLevel.ALL);
         }
 
-        public void SMALLEFFECT(Exception e, string msg)
+        public static void FDEBUG(Exception e, string msg)
         {
-            WriteError(e, msg, OperateLevel.SMALLEFFECT);
+            WriteError(e, msg, LogLevel.DEBUG);
         }
 
-        public void NORMAL(Exception e, string msg)
+        public static void FINFO(Exception e, string msg)
         {
-            WriteError(e, msg, OperateLevel.NORMAL);
+            WriteError(e, msg, LogLevel.INFO);
         }
 
-        public void IMPORTTANT(Exception e, string msg)
+        public static void FWARNING(Exception e, string msg)
         {
-            WriteError(e, msg, OperateLevel.IMPORTTANT);
+            WriteError(e, msg, LogLevel.WARNING);
         }
 
-        public void WriteError(Exception ex, string msg, OperateLevel operateLevel)
+        public static void FERROR(Exception e, string msg)
         {
-            if (_configAllWrite)
+            WriteError(e, msg, LogLevel.ERROR);
+        }
+
+        public static void WriteError(Exception ex, string msg, LogLevel logLevel)
+        {
+            if ((int)_fileWriteLevel == (int)LogLevel.OFF)
             {
-                FileWriter($"{msg} message : {ex.Message}. StackTrace : {ex.StackTrace}", operateLevel);
+                return;
+            }
+            if ((int)logLevel < (int)_fileWriteLevel)
+            {
+                return;
+            }
+            if (_isWriteToFile)
+            {
+                FileWriter($"Message : {msg}\nException message : {ex.Message}\nStackTrace : {ex.StackTrace}", logLevel);
             }
         }
         #endregion
 
         #region Common
-        private void GetNowTime()
-        {
-            _dateTime = DateTime.Now;
-        }
-
         /// <summary>
         /// 获取当前时间
         /// </summary>
         /// <returns></returns>
-        private string GetDayStr()
+        private static string GetDayStr()
         {
-            GetNowTime();
-            return _dateTime.ToString("yyyy-MM-dd HH:mm:ss ffff");
+            return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss ffff");
         }
 
         /// <summary>
@@ -263,43 +223,48 @@ namespace Client.Log
         /// <param name="msg"></param>
         /// <param name="level"></param>
         /// <returns></returns>
-        public bool FileWriter<T>(string msg, T level)
+        public static bool FileWriter<T>(string msg, T level)
         {
-            GetNowTime();                                                                                           // 今の時間を更新
-            string fileName = $"{_dateTime:yyyy-MM-dd HH}-{(_dateTime.Minute / 10 * 10)}.txt";                      // テキストファイルネーム
+            DateTime dateTime = DateTime.Now;                                                                                           // 今の時間を更新
+            string fileName = $"{dateTime:yyyy-MM-dd HH}：{dateTime.Minute / 10 * 10}~{dateTime.Minute / 10 * 10 + 10}.txt";                      // テキストファイルネーム
             (string dayFolderPath, string hourFolderPath) = SetPath();
             CheckFileExists(dayFolderPath, hourFolderPath);
             string filePath = Path.Combine(hourFolderPath, fileName);
 
-            using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
+            lock (_lockObj)
             {
-                file.Lock(0,file.Length);
-                using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
+                try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append($"[{GetDayStr()}] ");
-                    sb.Append($"[{level}] ");
-                    sb.Append(msg);
-                    writer.WriteLineAsync(sb.ToString());
-                    DEBUG($"Written to file : {fileName}...");
+                    using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
+                    {
+                        using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
+                        {
+                            string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
+                            writer.WriteLine(dumpMsg);
+                            DEBUG($"Written to file : {fileName}...");
+                        }
+                    }
                 }
-                file.Unlock(0, file.Length);
+                catch (Exception e)
+                {
+                    ERROR("Log writing error...", e);
+                }
             }
             return true; // 表示文件写入成功
         }
 
-        private (string, string) SetPath()
+        private static (string, string) SetPath()
         {
-            string today = _dateTime.ToString("yyyy-MM-dd");                                            // 日付
-            string hour = _dateTime.ToString("HH");                                                     // 時間
+            string today = DateTime.Now.ToString("yyyy-MM-dd");                                            // 日付
+            string hour = DateTime.Now.ToString("HH");                                                     // 時間
 
-            string dayFolderPath = Path.Combine(_logFolderPath, today);                                 // 日付フォルダー
+            string dayFolderPath = Path.Combine(Const.LOG_FOLDER_PATH, today);                          // 日付フォルダー
             string hourFolderPath = Path.Combine(dayFolderPath, hour + "H");                            // 時間区分フォルダー
 
             return (dayFolderPath, hourFolderPath);
         }
 
-        private void CheckFileExists(string dayFolderPath, string hourFolderPath)
+        private static void CheckFileExists(string dayFolderPath, string hourFolderPath)
         {
             if (!Directory.Exists(dayFolderPath))
             {
@@ -317,4 +282,5 @@ namespace Client.Log
         }
         #endregion
     }
+
 }

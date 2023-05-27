@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using Newtonsoft.Json;
-using Server.Log;
+using Client.Log;
 
-namespace Server.Common
+namespace Client.Common
 {
     public static class Json
     {

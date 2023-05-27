@@ -44,7 +44,7 @@ namespace Server.Encryption
         /// <param name="key">Aes key</param>
         /// <param name="iv">Vector iv</param>
         /// <returns></returns>
-        public static byte[] Encrypt(string plainText, byte[] key, byte[] iv)
+        public static byte[] Encrypt(byte[] plainBytes, byte[] key, byte[] iv)
         {
             using (Aes aes = Aes.Create())
             {
@@ -56,7 +56,6 @@ namespace Server.Encryption
                 {
                     using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
                     {
-                        byte[] plainBytes = DefaultEncoding.GetBytes(plainText);
                         cs.Write(plainBytes, 0, plainBytes.Length);
                         cs.FlushFinalBlock();
                     }

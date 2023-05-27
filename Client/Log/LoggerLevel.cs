@@ -1,13 +1,11 @@
-﻿using System;
-
-namespace Client.Log
+﻿namespace Client.Log
 {
     /// <summary>
     /// Log Level
     /// </summary>
     public enum LogLevel
     {
-        EVERYTHING,
+        ALL,
 
         DEBUG,
 
@@ -17,5 +15,6 @@ namespace Client.Log
 
         ERROR,
 
+        OFF,
     }
 }

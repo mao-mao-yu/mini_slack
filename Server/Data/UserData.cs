@@ -9,8 +9,6 @@ namespace Server.Data
 {
     public class UserData
     {
-        private readonly Logger lg = new Logger();
-
         public string UserName { get; set; }
         public string NickName { get; set; }
         public string Password { get; set; }
@@ -36,7 +34,7 @@ namespace Server.Data
                 }
                 catch (Exception e)
                 {
-                    lg.FWARNING(e, "Convert str to json error ");
+                    Logger.FWARNING(e, "Convert str to json error ");
                 }
             }
         }
@@ -61,7 +59,7 @@ namespace Server.Data
             string outputPath = Path.Combine(_userDataPath, fileName);
             if (_dataDict.Count != 6)
             {
-                lg.FWARNING($"Insufficient user data. DataDict's count is {_dataDict.Count}");
+                Logger.FWARNING($"Insufficient user data. DataDict's count is {_dataDict.Count}");
                 return;
             }
             using (FileStream fileStream = new FileStream(outputPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))

@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Server.Error;
-using Server.Log;
+using Client.Log;
 
-namespace Server.SocketAsyncCore
+namespace Client.ClientCore
 {
-    public class SocketAsyncRingBuffer
+    public class RingBuffer
     {
 
         public int ReadIndex { get; private set; }
@@ -26,7 +25,7 @@ namespace Server.SocketAsyncCore
         /// ctor
         /// </summary>
         /// <param name="size">Buffer size</param>
-        public SocketAsyncRingBuffer(int size)
+        public RingBuffer(int size)
         {
             buffer = new byte[size];
             Size = size;
@@ -83,6 +82,29 @@ namespace Server.SocketAsyncCore
                 Array.Copy(data, 0, buffer, WriteIndex, space);
                 Array.Copy(data, space, buffer, 0, data.Length - space);
                 WriteIndex = data.Length - space;
+            }
+            Logger.DEBUG($"Write method end WriteIndex is {WriteIndex}");
+        }
+
+        public void Write(byte[] data, int offset, int size)
+        {
+            if (size > Size)
+            {
+                throw new ArgumentException("Length is larger than buffer size");
+            }
+
+            Logger.DEBUG($"Write method start WriteIndex is {WriteIndex}");
+            int space = Size - WriteIndex;
+            if (size <= space)
+            {
+                Array.Copy(data, 0, buffer, WriteIndex, size);
+                WriteIndex += size;
+            }
+            else
+            {
+                Array.Copy(data, 0, buffer, WriteIndex, space);
+                Array.Copy(data, space, buffer, 0, size - space);
+                WriteIndex = size - space;
             }
             Logger.DEBUG($"Write method end WriteIndex is {WriteIndex}");
         }

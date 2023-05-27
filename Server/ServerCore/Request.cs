@@ -12,12 +12,12 @@ namespace Server.ServerCore
         public Request(byte[] metaData)
         {
             string jsonStr = Encoding.UTF8.GetString(metaData);
-            JsonDict = JsonConvert.DeserializeObject<MyDictionary<string, string>>(jsonStr);
+            JsonDict = Json.Load<MyDictionary<string, string>>(jsonStr);
         }
 
         public Request(string jsonStr)
         {
-            JsonDict = JsonConvert.DeserializeObject<MyDictionary<string, string>>(jsonStr);
+            JsonDict = Json.Load<MyDictionary<string, string>>(jsonStr);
         }
 
         public Dictionary<string, string> GetDict()
