@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using Server.SocketAsyncCore;
-using Server.Data;
-using Server.Encryption;
-using Server.Interface;
-using Server.Log;
+using Server.Models;
+using Common.Encryption;
+using Server.ServerInterface;
+using Common.Log;
 
 namespace Server.ServerCore
 {
-    public class Service : SocketAsyncTcpServer
+    public class Service : SocketAsyncTcpServer, IServer
     {
         #region ctor
         public Service() : base()
@@ -39,48 +38,69 @@ namespace Server.ServerCore
             //}
         }
 
-        //private static void LoginAction(Request request)
-        //{
-        //    string username = request.Get("username");
-        //    string encryptedPassword = @"";
-        //    HashEncrypter.Verify(
-        //        AesEncrypter.Decrypt(request.Get("password"), Convert.FromBase64String(KEY)),
-        //        encryptedPassword);
-        //}
-
-        private static void RegisterAction(Request request)
+        public void Broadcast(int groupID)
         {
-
+            throw new NotImplementedException();
         }
 
-        private static void PrivateChatAction(Request request)
+        void IServer.HandleBlockSomeone(Request request)
         {
-
+            throw new NotImplementedException();
         }
 
-        private static void GroupChatAction(Request request)
+        void IServer.HandleGetBlockList(Request request)
         {
-
+            throw new NotImplementedException();
         }
 
-        private static void GetFriendsListAction(Request request)
+        void IServer.HandleGetFriendList(Request request)
         {
-
+            throw new NotImplementedException();
         }
 
-        private static void GetGroupMemberAction(Request request)
+        void IServer.HandleGetGroupMemberList(Request request)
         {
-
+            throw new NotImplementedException();
         }
 
-        private static void BlockAction(Request request)
+        void IServer.HandleGetUserData(Request request)
         {
-
+            throw new NotImplementedException();
         }
 
-        private UserData GetUserData()
+        void IServer.HandleGroupChat(Request request)
         {
-            return null;
+            throw new NotImplementedException();
+        }
+
+        void IServer.HandleLogin(Request request)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IServer.HandlePrivateChat(Request request)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IServer.HandleRegist(Request request)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IServer.HandleUnblockSomeone(Request request)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IServer.Start()
+        {
+            throw new NotImplementedException();
+        }
+
+        void IServer.Stop()
+        {
+            throw new NotImplementedException();
         }
     }
 }

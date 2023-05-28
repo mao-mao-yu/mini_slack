@@ -1,20 +1,22 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
-using Server.Common;
+﻿using Common;
 
-namespace Server.ServerCore
+namespace Server.Models
 {
     public class Response
     {
-        private readonly MyDictionary<string, string> RequestBaseData = new MyDictionary<string, string>();
+        private readonly Dictionary<string, string> _responseDict;
 
         /// <summary>
         /// request params
         /// </summary>
         /// <param name="action">動作</param>
-        public Response(string action)
+        public Response(string action, bool result)
         {
-            RequestBaseData.Add("action", action);
+            _responseDict = new Dictionary<string, string>
+            {
+                { "action", action },
+                { "result", result.ToString()}
+            };
         }
 
         /// <summary>
@@ -24,18 +26,18 @@ namespace Server.ServerCore
         /// <param name="value"></param>
         public Response Add(string key, string value)
         {
-            RequestBaseData.Add(key, value);
+            _responseDict.Add(key, value);
             return this;
         }
 
         public Dictionary<string, string> Get()
         {
-            return RequestBaseData;
+            return _responseDict;
         }
 
         public new string ToString()
         {
-            return JsonConvert.SerializeObject(RequestBaseData);
+            return Json.Dump(_responseDict);
         }
     }
 }

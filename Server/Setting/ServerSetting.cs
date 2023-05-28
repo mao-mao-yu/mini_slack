@@ -1,6 +1,6 @@
-﻿namespace Common.Setting
+﻿namespace Server.Setting
 {
-    public class ServerSetting : SettingBase
+    public class ServerSetting : Common.Setting.SettingBase
     {
         #region Properties
         /// <summary>

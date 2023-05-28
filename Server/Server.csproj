@@ -6,13 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Log\Log\**" />
-    <EmbeddedResource Remove="Log\Log\**" />
-    <None Remove="Log\Log\**" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\UserData\" />
+    <Folder Include="Data\GroupData\" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
