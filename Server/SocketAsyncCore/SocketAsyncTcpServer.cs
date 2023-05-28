@@ -132,7 +132,7 @@ namespace Server.SocketAsyncCore
         {
             try
             {
-                ServerSetting setting = SettingBase.LoadSetting<ServerSetting>(Const.SERVER_SETTING_PATH);
+                Setting.Setting setting = SettingBase.LoadSetting<Setting.Setting>(Const.SERVER_SETTING_PATH);
                 Address = IPAddress.Parse(setting.ServerIP);
                 Port = setting.Port;
                 DefaultEncoding = Encoding.GetEncoding(setting.DefaultEncoding);

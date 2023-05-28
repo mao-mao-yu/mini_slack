@@ -2,7 +2,7 @@
 
 namespace Server.ServerInterface
 {
-    public interface IServer
+    public interface IMessageHandler
     {
         // 登录
         public void HandleLogin(Request request);

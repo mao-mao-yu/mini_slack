@@ -8,7 +8,7 @@ using Common.Log;
 
 namespace Server.ServerCore
 {
-    public class Service : SocketAsyncTcpServer, IServer
+    public class Service : SocketAsyncTcpServer, IMessageHandler
     {
         #region ctor
         public Service() : base()
@@ -43,62 +43,62 @@ namespace Server.ServerCore
             throw new NotImplementedException();
         }
 
-        void IServer.HandleBlockSomeone(Request request)
+        void IMessageHandler.HandleBlockSomeone(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandleGetBlockList(Request request)
+        void IMessageHandler.HandleGetBlockList(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandleGetFriendList(Request request)
+        void IMessageHandler.HandleGetFriendList(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandleGetGroupMemberList(Request request)
+        void IMessageHandler.HandleGetGroupMemberList(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandleGetUserData(Request request)
+        void IMessageHandler.HandleGetUserData(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandleGroupChat(Request request)
+        void IMessageHandler.HandleGroupChat(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandleLogin(Request request)
+        void IMessageHandler.HandleLogin(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandlePrivateChat(Request request)
+        void IMessageHandler.HandlePrivateChat(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandleRegist(Request request)
+        void IMessageHandler.HandleRegist(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.HandleUnblockSomeone(Request request)
+        void IMessageHandler.HandleUnblockSomeone(Request request)
         {
             throw new NotImplementedException();
         }
 
-        void IServer.Start()
+        void IMessageHandler.Start()
         {
             throw new NotImplementedException();
         }
 
-        void IServer.Stop()
+        void IMessageHandler.Stop()
         {
             throw new NotImplementedException();
         }
