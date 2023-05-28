@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using Newtonsoft.Json;
-using Client.Log;
+using Common.Log;
 
-namespace Client.Common
+namespace Common
 {
     public static class Json
     {
@@ -25,7 +25,7 @@ namespace Client.Common
             return default;
         }
 
-        public static void Dumps<TObj>(TObj obj, string filePath)
+        public static void DumpToFile<TObj>(TObj obj, string filePath)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace Client.Common
             }
         }
 
-        public static TResult Loads<TResult>(string filePath)
+        public static TResult LoadFromFile<TResult>(string filePath)
         {
             if (!File.Exists(filePath))
             {

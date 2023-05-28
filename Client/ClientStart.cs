@@ -3,7 +3,7 @@ using System.Threading;
 using System.Net.Sockets;
 using System.Net;
 using System.Collections.Generic;
-using Client.Setting;
+using Common.Setting;
 using Client.ClientCore;
 using Client.Data;
 

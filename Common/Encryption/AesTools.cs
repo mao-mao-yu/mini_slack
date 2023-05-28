@@ -1,12 +1,10 @@
-﻿using System.Text;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.IO;
 
-namespace Server.Encryption
+namespace Common.Encryption
 {
     public static class AesEncrypter
-    {
-        public static Encoding DefaultEncoding { get; set; } = Encoding.UTF8;
+    { 
         public static int KeySize { get; }
 
         /// <summary>

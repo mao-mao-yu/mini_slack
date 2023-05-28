@@ -1,7 +1,4 @@
-﻿using System.IO;
-using Client.Common;
-
-namespace Client.Setting
+﻿namespace Common.Setting
 {
     public class SettingBase
     {
@@ -13,7 +10,7 @@ namespace Client.Setting
         /// <returns></returns>
         public static TObj LoadSetting<TObj>(string filePath)
         {
-            return Json.Loads<TObj>(filePath);
+            return Json.LoadFromFile<TObj>(filePath);
         }
 
         /// <summary>
@@ -22,12 +19,13 @@ namespace Client.Setting
         /// <param name="filePath"></param>
         public void SaveSetting(string filePath)
         {
-            string directoryPath = Path.GetDirectoryName(filePath);
-            if (!File.Exists(filePath))
+            string directoryPath = System.IO.Path.GetDirectoryName(filePath);
+            if (!System.IO.File.Exists(filePath))
             {
-                Directory.CreateDirectory(directoryPath);
+
+                System.IO.Directory.CreateDirectory(directoryPath);
             }
-            Json.Dumps(this, filePath);
+            Json.DumpToFile(this, filePath);
         }
     }
 }

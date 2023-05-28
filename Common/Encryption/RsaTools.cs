@@ -1,29 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Security.Cryptography;
 
-namespace Client.Encryption
+namespace Common.Encryption
 {
     public static class RsaEncryptor
     {
         #region Fields
-        /// <summary>
-        /// デフォルトコードページ
-        /// </summary>
-        private static Encoding _defaultEncoding = Encoding.UTF8;
-
         private static HashAlgorithmName _hashAlgorithmName = HashAlgorithmName.SHA256;
 
         private static RSASignaturePadding _RSAEncryptionPadding = RSASignaturePadding.Pss;
         #endregion
 
         #region Properties
-        /// <summary>
-        /// デフォルトコードページプロパティ
-        /// </summary>
-        public static Encoding DefaultEncoding => _defaultEncoding;
-
         public static HashAlgorithmName DefaultHashAlgorithmName => _hashAlgorithmName;
 
         public static RSASignaturePadding DefaultRsaSignaturePadding => _RSAEncryptionPadding;
@@ -34,30 +22,30 @@ namespace Client.Encryption
         /// Rsa encrypt
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="plainData"></param>
+        /// <param name="data"></param>
         /// <param name="publicKey"></param>
         /// <param name="toString"></param>
         /// <returns></returns>
-        public static byte[] Encrypt<T>(T plainData, string publicKey)
-            where T : class
+        public static byte[] Encrypt<T>(T data, string publicKey)
+            where T: class
         {
             byte[] encryptedData;
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
             {
                 rsa.FromXmlString(publicKey);
-                if (plainData is string)
+                if (data is string)
                 {
-                    string strData = plainData as string;
-                    encryptedData = rsa.Encrypt(DefaultEncoding.GetBytes(strData), true);
+                    string strData = data as string;
+                    encryptedData = rsa.Encrypt(Text.GetBytes(strData), true);
                 }
-                else if (plainData is byte[])
+                else if (data is byte[])
                 {
-                    byte[] byteData = plainData as byte[];
+                    byte[] byteData = data as byte[];
                     encryptedData = rsa.Encrypt(byteData, true);
                 }
                 else
                 {
-                    throw new ArgumentException("Invalid argument type. Only string and byte array are allowed.", nameof(plainData));
+                    throw new ArgumentException("Invalid argument type. Only string and byte array are allowed.", nameof(data));
                 }
             }
             return encryptedData;
@@ -69,10 +57,10 @@ namespace Client.Encryption
         /// Decrypt data(byte[] or string)
         /// </summary>
         /// <typeparam name="T">byte[] or string</typeparam>
-        /// <param name="cipherData">Data</param>
+        /// <param name="data">Data</param>
         /// <param name="privateKey">Private key</param>
         /// <returns></returns>
-        public static byte[] Decrypt<T>(T cipherData, string privateKey)
+        public static byte[] Decrypt<T>(T data, string privateKey)
             where T : class
         {
             byte[] decryptedData;
@@ -80,19 +68,19 @@ namespace Client.Encryption
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
             {
                 rsa.FromXmlString(privateKey);
-                if (cipherData is string)
+                if (data is string)
                 {
-                    string strData = cipherData as string;
-                    decryptedData = rsa.Decrypt(DefaultEncoding.GetBytes(strData), true);
+                    string strData = data as string;
+                    decryptedData = rsa.Decrypt(Text.GetBytes(strData), true);
                 }
-                else if (cipherData is byte[])
+                else if (data is byte[])
                 {
-                    byte[] bytesData = cipherData as byte[];
+                    byte[] bytesData = data as byte[];
                     decryptedData = rsa.Decrypt(bytesData, true);
                 }
                 else
                 {
-                    throw new ArgumentException("Invalid argument type. Only string and byte array are allowed.", nameof(cipherData));
+                    throw new ArgumentException("Invalid argument type. Only string and byte array are allowed.", nameof(data));
                 }
             }
             return decryptedData;
@@ -117,7 +105,7 @@ namespace Client.Encryption
                 if (data is string)
                 {
                     string strData = data as string;
-                    signature = rsa.SignData(DefaultEncoding.GetBytes(strData), DefaultHashAlgorithmName, DefaultRsaSignaturePadding);
+                    signature = rsa.SignData(Text.GetBytes(strData), DefaultHashAlgorithmName, DefaultRsaSignaturePadding);
                 }
                 else if (data is byte[])
                 {

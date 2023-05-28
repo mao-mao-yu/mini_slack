@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Security.Cryptography;
 
-namespace Client.Encryption
+namespace Common.Encryption
 {
-    public static class PasswordEncryptionHash
+    public static class HashEncrypter
     {
         private const int SaltSize = 16; // 加盐大小，以字节为单位
         private const int Iterations = 10000; // 迭代次数，用于增加计算成本
@@ -82,10 +80,4 @@ namespace Client.Encryption
             return int.TryParse(input, out _);
         }   
     }
-
-    public class FileEncryption
-    {
-
-    }
-
 }

@@ -1,10 +1,8 @@
 ﻿using System;
 using System.IO;
-using System.Text;
-using Server.Setting;
-using Server.Data;
+using Common.Setting;
 
-namespace Server.Log
+namespace Common.Log
 {
     /// <summary>
     /// Logger
@@ -237,7 +235,7 @@ namespace Server.Log
                 {
                     using (FileStream file = new FileStream(filePath, FileMode.Append, FileAccess.Write))
                     {
-                        using (StreamWriter writer = new StreamWriter(file, Encoding.UTF8))
+                        using (StreamWriter writer = new StreamWriter(file, System.Text.Encoding.UTF8))
                         {
                             string dumpMsg = string.Concat($"[{GetDayStr()}] ", $"[{level}] ", msg);
                             writer.WriteLine(dumpMsg);

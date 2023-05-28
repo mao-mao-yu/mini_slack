@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Server.Log
+﻿namespace Common.Log
 {
     /// <summary>
     /// Log Level

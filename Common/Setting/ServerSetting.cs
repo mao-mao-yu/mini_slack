@@ -1,4 +1,4 @@
-﻿namespace Server.Setting
+﻿namespace Common.Setting
 {
     public class ServerSetting : SettingBase
     {

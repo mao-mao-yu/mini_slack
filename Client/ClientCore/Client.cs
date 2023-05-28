@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using Client.Setting;
-using Client.Data;
+using Common.Setting;
+using Common;
 using System.Net;
 using System.Net.Sockets;
-using Client.Log;
+using Common.Log;
 using System.Threading;
 using System.Text;
 using System.IO;

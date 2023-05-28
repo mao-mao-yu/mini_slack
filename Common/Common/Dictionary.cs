@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-
-namespace Server.Common
+﻿namespace Common
 {
-    public class MyDictionary<Tkey, Tvalue> : Dictionary<Tkey, Tvalue>
+    public class Dictionary<Tkey, Tvalue> : System.Collections.Generic.Dictionary<Tkey, Tvalue>
     {
         public Tvalue Get(Tkey key, Tvalue defaultValue)
         {

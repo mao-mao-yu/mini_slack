@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Client.Setting
+﻿namespace Common.Setting
 {
     public class ClientSetting:SettingBase
     {

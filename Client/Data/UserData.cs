@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using Client.Log;
-using Client.Common;
+using Common.Log;
+using Common;
 
 namespace Client.Data
 {

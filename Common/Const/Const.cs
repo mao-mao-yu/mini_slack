@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 
-namespace Server.Data
+namespace Common
 {
     public static class Const
     {
@@ -27,6 +25,11 @@ namespace Server.Data
         public static readonly string SERVER_SETTING_PATH = Path.Combine(SETTING_FOLDER_PATH, "ServerSetting.json");
 
         /// <summary>
+        /// Server setting path
+        /// </summary>
+        public static readonly string CLIENT_SETTING_PATH = Path.Combine(SETTING_FOLDER_PATH, "ClientSetting.json");
+
+        /// <summary>
         /// Logger setting path
         /// </summary>
         public static readonly string LOGGER_SETTING_PATH = Path.Combine(SETTING_FOLDER_PATH, "LoggerSetting.json");
@@ -35,5 +38,15 @@ namespace Server.Data
         /// Int size
         /// </summary>
         public const int INT_SIZE = sizeof(int);
+
+        /// <summary>
+        /// RSA_PUBLICKEY_SIZE
+        /// </summary>
+        public const int RSA_PUBLICKEY_SIZE = 415;
+
+        /// <summary>
+        /// GUID_SIZE
+        /// </summary>
+        public const int GUID_SIZE = 36;
     }
 }
