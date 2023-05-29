@@ -30,9 +30,9 @@ namespace Server.Models
             return this;
         }
 
-        public Dictionary<string, string> Get()
+        public string Get(string key)
         {
-            return _responseDict;
+            return _responseDict.Get(key);
         }
 
         public new string ToString()

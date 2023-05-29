@@ -3,14 +3,13 @@ using System.Text;
 using System.Net.Sockets;
 using System.Threading;
 using System.Net;
-using Server.Encryption;
-using Server.Log;
-using Server.Data;
-using Server.Common;
+using Common.Encryption;
+using Common.Log;
+using Common;
+using Server.Models;
 using Server.Error;
-using Server.Setting;
+using Server.SerSetting;
 using System.IO;
-using System.Collections.Generic;
 
 namespace Server.SocketAsyncCore
 {
@@ -132,7 +131,7 @@ namespace Server.SocketAsyncCore
         {
             try
             {
-                Setting.Setting setting = SettingBase.LoadSetting<Setting.Setting>(Const.SERVER_SETTING_PATH);
+                Setting setting = Common.Setting.SettingBase.LoadSetting<Setting>(Const.SERVER_SETTING_PATH);
                 Address = IPAddress.Parse(setting.ServerIP);
                 Port = setting.Port;
                 DefaultEncoding = Encoding.GetEncoding(setting.DefaultEncoding);

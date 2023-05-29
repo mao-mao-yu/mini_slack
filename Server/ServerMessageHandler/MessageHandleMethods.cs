@@ -13,7 +13,7 @@ namespace Server.ServerMessageHandler
        
         public MessageHandleMethods()
         {
-            Dictionary<string, Action<Request>> messageHandlers = new Dictionary<string, Action<Request>>()
+            messageHandlers = new Dictionary<string, Action<Request>>()
             {
                 { "BlockSomeone", HandleBlockSomeone },
                 { "GetBlockList", HandleGetBlockList },
